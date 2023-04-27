@@ -24,6 +24,18 @@ body {
 	margin-right: auto;
 }
 
+.markdown-body table tr {
+	background-color: #272727;
+}
+
+.markdown-body table tr:nth-child(2n) {
+	background-color: #2f2d2d;
+}
+
+td {
+	border: 1px solid #484848;
+}
+
 .markdown-body code {
 	background-color: rgba(255, 255, 255, 0.08);
 }
