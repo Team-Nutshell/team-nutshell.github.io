@@ -1,0 +1,97 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+body {
+	color: #c6c7c8;
+	background-color: #2f2d2d;
+}
+
+.markdown-body .highlight pre, .markdown-body pre {
+	background-color: #272727;
+	line-break: auto;
+}
+
+.markdown-body pre code, .markdown-body pre tt {
+	white-space: break-spaces;
+}
+
+.markdown-body img {
+	background-color: #fff0;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.markdown-body code {
+	background-color: rgba(255, 255, 255, 0.08);
+}
+
+.text-gray {
+	color: #9ea7b0 !important;
+}
+
+a {
+	color: #72b2fb;
+}
+
+.highlight .c1 {
+	color: #62b950;
+}
+
+.highlight .k, .highlight .kv {
+	color: #acacac;
+}
+
+.highlight .kt {
+	color: #93acf9;
+}
+
+.highlight .mf {
+	color: #06bfbf;
+}
+
+.highlight .mi {
+	color: #09c8c8;
+}
+
+.highlight .nb {
+	color: #19B1E3;
+}
+
+.highlight .nc {
+	color: #93acf9;
+}
+
+.highlight .nf {
+	color: #ff5e6d;
+}
+
+.highlight .nl {
+	color: #ff5e6d;
+}
+
+.highlight .nt {
+	color: #8b8bfd;
+}
+
+.highlight .nv {
+	color: #09c8c8;
+}
+
+.highlight .o {
+	color: #acacac;
+}
+
+.highlight .s {
+	color: #ff5e6d;
+}
+
+.highlight .se {
+	color: #ff5e6d;
+}
+
+.highlight .si {
+	color: #ff5e6d;
+}
