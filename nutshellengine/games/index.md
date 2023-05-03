@@ -1,4 +1,4 @@
-# Games made with Nutshell Engine
+# Games made with NutshellEngine
 
 | Name | Author | Description |
 | ------------- | ------------- | ---------------- |
