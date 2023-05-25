@@ -7,6 +7,7 @@
 | [**default**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule) | Empty module. |
 | [**<img src="https://i.imgur.com/LBZcpTa.png" width="150px"><br>vulkan-triangle**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-triangle) | Draw a triangle with Vulkan. |
 | [**<img src="https://i.imgur.com/3CHyrnv.png" width="150px"><br>directx12-triangle**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/directx12-triangle) | Draw a triangle with Direct3D 12. |
+| [**<img src="https://i.imgur.com/JL5xlsl.png" width="150px"><br>webgpu-triangle**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/webgpu-triangle) | Draw a triangle with WebGPU. |
 | [**<img src="https://i.imgur.com/7JPWwwL.png" width="150px"><br>vulkan-ray-marching**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-ray-marching) | Draw using ray marching with Vulkan. |
 | [**<img src="https://i.imgur.com/WnWYMYU.png" width="150px"><br>vulkan-multi-window**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-multi-window) | Draw on multiple windows with Vulkan. |
 | [**<img src="https://i.imgur.com/AfWswSa.png" width="150px"><br>vulkan-model**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-model) | Draw models (meshes and textures) with Vulkan. |
