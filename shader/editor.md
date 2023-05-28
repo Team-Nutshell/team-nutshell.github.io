@@ -19,4 +19,5 @@ Pre-defined variables:
 time: f32 - Current timestamp, starting from 0.0 at application launch.
 cameraPosition: vec3f - Current position of the camera.
 cameraDirection: vec3f - Current direction of the camera.
+resolution: vec2u - Resolution, is 800u by 600u pixels.
 ```
