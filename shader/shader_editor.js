@@ -790,7 +790,7 @@ document.addEventListener("keyup", (event) => {
 }, false);
 document.addEventListener("click", (event) => {
     if (event.button == 0) {
-        if (event.target == document.querySelector("#webgpuCanvas")) {
+        if (event.target == canvas) {
             inCanvas = true;
         }
         else {
