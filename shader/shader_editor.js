@@ -397,7 +397,7 @@ fn scene(p: vec3f) -> Object {
 	var p2: vec3f = vec3f(p.x, pR(p.yz));
 	p2 = rayRepeat(p, vec3f(5.0));
 	let sphere: Object = Object(shSphere(p - nutshellWorldPosition, 5.0 + displace(p2)), Material(vec3f(1.0, 1.0, 1.0), vec2f(0.5 , 1.0)));
-	let nutshellHole: Object = Object(shTriangularPrism(pNutshellHole - vec3f(-1.0, -2.0, 0.0) - nutshellWorldPosition, vec2f(6.0, 5.0)), Material(vec3f(0.0, 0.0, 0.0), vec2f(0.0, 0.5)));
+	let nutshellHole: Object = Object(shTriangularPrism(pNutshellHole - vec3f(-1.0, -3.5, 0.0) - nutshellWorldPosition, vec2f(7.0, 5.0)), Material(vec3f(0.0, 0.0, 0.0), vec2f(0.0, 0.5)));
 
 	let scene: Object = opSmoothDifference(sphere, nutshellHole, 2.0);
 
