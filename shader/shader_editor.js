@@ -26,7 +26,7 @@ const preDefinedFragmentShader = `
 @group(0) @binding(0) var<uniform> time: f32;
 @group(0) @binding(1) var<uniform> cameraPosition: vec3f;
 @group(0) @binding(2) var<uniform> cameraDirection: vec3f;
-const resolution: vec2u = vec2u(980u, 600u);
+@group(0) @binding(3) var<uniform> resolution: vec2u;
 `;
 const fragmentShader = `const M_PI: f32 = 3.1415926535897932384626433832795;
 
@@ -861,8 +861,8 @@ class Renderer {
             this.colorTexture = this.device.createTexture({
                 label: "Color texture",
                 size: {
-                    width: 980,
-                    height: 600
+                    width: canvas.width,
+                    height: canvas.height
                 },
                 mipLevelCount: 1,
                 sampleCount: 1,
@@ -886,7 +886,7 @@ class Renderer {
                 maxAnisotropy: 1
             });
             this.uniformBuffer = this.device.createBuffer({
-                size: 512 + 16,
+                size: 768 + 8,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
             this.vertexShaderModule = this.device.createShaderModule({
@@ -919,6 +919,13 @@ class Renderer {
                         buffer: {
                             type: "uniform"
                         }
+                    },
+                    {
+                        binding: 3,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        buffer: {
+                            type: "uniform"
+                        }
                     }]
             });
             this.renderPipelineBindGroup = this.device.createBindGroup({
@@ -942,6 +949,13 @@ class Renderer {
                         resource: {
                             buffer: this.uniformBuffer,
                             offset: 512
+                        }
+                    },
+                    {
+                        binding: 3,
+                        resource: {
+                            buffer: this.uniformBuffer,
+                            offset: 768
                         }
                     }]
             });
@@ -1142,9 +1156,14 @@ class Renderer {
             uniformDataCameraDirection[0] = this.cameraDirection[0];
             uniformDataCameraDirection[1] = this.cameraDirection[1];
             uniformDataCameraDirection[2] = this.cameraDirection[2];
+            const resolutionArrayBuffer = new ArrayBuffer(8);
+            const uniformDataResolution = new Uint32Array(resolutionArrayBuffer);
+            uniformDataResolution[0] = canvas.width;
+            uniformDataResolution[1] = canvas.height;
             this.device.queue.writeBuffer(this.uniformBuffer, 0, timeArrayBuffer, 0, 4);
             this.device.queue.writeBuffer(this.uniformBuffer, 256, cameraPositionArrayBuffer, 0, 12);
             this.device.queue.writeBuffer(this.uniformBuffer, 512, cameraDirectionArrayBuffer, 0, 12);
+            this.device.queue.writeBuffer(this.uniformBuffer, 768, resolutionArrayBuffer, 0, 8);
             const commandEncoder = this.device.createCommandEncoder({
                 label: "Command encoder"
             });
