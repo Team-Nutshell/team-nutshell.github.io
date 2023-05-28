@@ -7,7 +7,7 @@
 </center>
 <br>
 <button id="webgpuRefreshFragmentShader">Run</button>
-<p class="highlight" id="webgpuFragmentShader" contenteditable="true"></p>
+<textarea class="highlight" id="webgpuFragmentShader"></textarea>
 <p class="highlight" id="webgpuFragmentShaderCompilationMessage"></p>
 
 Click on the canvas to control the camera.
