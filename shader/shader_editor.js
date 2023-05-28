@@ -1046,6 +1046,7 @@ class Renderer {
             const deltaTime = timestamp - this.previousTime;
             this.previousTime = timestamp;
             if (refreshFragmentShader) {
+                compilationMessage.textContent = "";
                 const fragmentShaderModule = this.device.createShaderModule({
                     label: "Fragment shader module",
                     code: preDefinedFragmentShader + editableFragmentShader.value
@@ -1055,8 +1056,8 @@ class Renderer {
                     const compilationInfo = yield fragmentShaderModule.getCompilationInfo();
                     for (const message of compilationInfo.messages) {
                         if (message.type == "error") {
-                            compilationSuccess = false;
                             compilationMessage.textContent += "Error: ";
+                            compilationSuccess = false;
                         }
                         else if (message.type == "warning") {
                             compilationMessage.textContent += "Warning: ";
@@ -1064,11 +1065,11 @@ class Renderer {
                         else if (message.type == "info") {
                             compilationMessage.textContent += "Info: ";
                         }
-                        compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + "\n";
+                        const errorLine = (preDefinedFragmentShader + editableFragmentShader.value).split("\n", message.lineNum)[message.lineNum - 1].slice(0, -1);
+                        compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + "\n" + errorLine + "\n";
                     }
                 }
                 if (compilationSuccess) {
-                    compilationMessage.textContent = "";
                     this.renderPipeline = this.device.createRenderPipeline({
                         label: "Render pipeline",
                         vertex: {
