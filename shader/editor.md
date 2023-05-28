@@ -2,12 +2,10 @@
 
 <script src="shader_editor.js" defer></script>
 <p id="webgpuCheck"></p>
+<canvas id="webgpuCanvas" width="800" height="600"></canvas>
+<br>
 <button id="webgpuRefreshFragmentShader">Run</button>
-<div id="webgpuCanvasAndFragmentShader">
-	<p id="webgpuFragmentShader" contenteditable="true"></p>
-	<br>
-	<canvas id="webgpuCanvas" width="800" height="600"></canvas>
-</div>
+<p id="webgpuFragmentShader" contenteditable="true"></p>
 <br>
 <p id="webgpuFragmentShaderCompilationMessage"></p>
 
