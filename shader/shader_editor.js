@@ -1065,8 +1065,8 @@ class Renderer {
                         else if (message.type == "info") {
                             compilationMessage.textContent += "Info: ";
                         }
-                        const errorLine = (preDefinedFragmentShader + editableFragmentShader.value).split("\n", message.lineNum)[message.lineNum - 1].slice(0, -1);
-                        compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + "\n" + errorLine + "\n";
+                        const errorLine = (preDefinedFragmentShader + editableFragmentShader.value).split("\n", message.lineNum)[message.lineNum - 1].trim();
+                        compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + ((message.lineNum != 0) ? ("\n" + errorLine) : "") + "\n";
                     }
                 }
                 if (compilationSuccess) {
