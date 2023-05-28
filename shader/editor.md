@@ -10,9 +10,13 @@
 <p class="highlight" id="webgpuFragmentShader" contenteditable="true"></p>
 <p class="highlight" id="webgpuFragmentShaderCompilationMessage"></p>
 
+Click on the canvas to control the camera.
+
 Use **WASD** to move the camera.
 
 Use **arrow keys** to rotate the camera.
+
+Use **space** to go up and **Left Control** to go down.
 
 Pre-defined variables:
 ```

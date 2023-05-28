@@ -727,21 +727,27 @@ document.addEventListener("keydown", (event) => {
                 break;
             case "ArrowUp":
                 upPressed = true;
+                event.preventDefault();
                 break;
             case "ArrowLeft":
                 leftPressed = true;
+                event.preventDefault();
                 break;
             case "ArrowDown":
                 downPressed = true;
+                event.preventDefault();
                 break;
             case "ArrowRight":
                 rightPressed = true;
+                event.preventDefault();
                 break;
             case "Space":
                 spacePressed = true;
+                event.preventDefault();
                 break;
             case "ShiftLeft":
                 shiftPressed = true;
+                event.preventDefault();
                 break;
         }
     }
