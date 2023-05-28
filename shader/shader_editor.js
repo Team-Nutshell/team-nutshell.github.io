@@ -26,7 +26,7 @@ const preDefinedFragmentShader = `
 @group(0) @binding(0) var<uniform> time: f32;
 @group(0) @binding(1) var<uniform> cameraPosition: vec3f;
 @group(0) @binding(2) var<uniform> cameraDirection: vec3f;
-const resolution: vec2u = vec2u(800u, 600u);
+const resolution: vec2u = vec2u(980u, 600u);
 `;
 const fragmentShader = `const M_PI: f32 = 3.1415926535897932384626433832795;
 
@@ -850,7 +850,7 @@ class Renderer {
             this.colorTexture = this.device.createTexture({
                 label: "Color texture",
                 size: {
-                    width: 800,
+                    width: 980,
                     height: 600
                 },
                 mipLevelCount: 1,
