@@ -16,7 +16,7 @@ Use **WASD** to move the camera.
 
 Use **arrow keys** to rotate the camera.
 
-Use **space** to go up and **Left Control** to go down.
+Use **space** to go up and **left shift** to go down.
 
 Pre-defined variables:
 ```
