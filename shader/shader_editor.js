@@ -751,6 +751,16 @@ document.addEventListener("keydown", (event) => {
                 break;
         }
     }
+    else if (event.target == editableFragmentShader) {
+        if (event.code == "Tab") {
+            const start = editableFragmentShader.selectionStart;
+            editableFragmentShader.focus();
+            if (document.execCommand) { // Deprecated
+                document.execCommand("insertText", false, "\t");
+            }
+            event.preventDefault();
+        }
+    }
 }, false);
 document.addEventListener("keyup", (event) => {
     if (inCanvas) {
@@ -1023,7 +1033,7 @@ class Renderer {
             if (refreshFragmentShader) {
                 const fragmentShaderModule = this.device.createShaderModule({
                     label: "Fragment shader module",
-                    code: preDefinedFragmentShader + editableFragmentShader.textContent
+                    code: preDefinedFragmentShader + editableFragmentShader.value
                 });
                 var compilationSuccess = true;
                 if (fragmentShaderModule.getCompilationInfo) {
