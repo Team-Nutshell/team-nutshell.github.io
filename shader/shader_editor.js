@@ -697,6 +697,7 @@ editableFragmentShader.style.paddingTop = "10px";
 editableFragmentShader.style.paddingBottom = "10px";
 editableFragmentShader.style.borderStyle = "solid";
 editableFragmentShader.style.borderWidth = "1px";
+editableFragmentShader.style.resize = "none";
 editableFragmentShader.spellcheck = false;
 editableFragmentShader.textContent = fragmentShader;
 var compilationMessage = document.querySelector("#webgpuFragmentShaderCompilationMessage");
