@@ -2,12 +2,13 @@
 
 <script src="shader_editor.js" defer></script>
 <p id="webgpuCheck"></p>
-<canvas id="webgpuCanvas" width="800" height="600"></canvas>
+<center>
+	<canvas id="webgpuCanvas" width="800" height="600"></canvas>
+</center>
 <br>
 <button id="webgpuRefreshFragmentShader">Run</button>
-<p id="webgpuFragmentShader" contenteditable="true"></p>
-<br>
-<p id="webgpuFragmentShaderCompilationMessage"></p>
+<p class="highlight" id="webgpuFragmentShader" contenteditable="true"></p>
+<p class="highlight" id="webgpuFragmentShaderCompilationMessage"></p>
 
 Use **WASD** to move the camera.
 

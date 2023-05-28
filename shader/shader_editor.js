@@ -691,7 +691,7 @@ editableFragmentShader.style.height = "600px";
 editableFragmentShader.style.overflowY = "scroll";
 editableFragmentShader.style.whiteSpace = "break-spaces";
 editableFragmentShader.style.borderStyle = "solid";
-editableFragmentShader.style.borderColor = "rgba(0, 0, 175, 255)";
+editableFragmentShader.style.borderWidth = "1px";
 editableFragmentShader.spellcheck = false;
 editableFragmentShader.textContent = fragmentShader;
 var compilationMessage = document.querySelector("#webgpuFragmentShaderCompilationMessage");
@@ -699,6 +699,7 @@ compilationMessage.style.width = "95%";
 compilationMessage.style.overflowY = "scroll";
 compilationMessage.style.whiteSpace = "break-spaces";
 compilationMessage.style.borderStyle = "solid";
+compilationMessage.style.borderWidth = "1px";
 compilationMessage.style.borderColor = "rgba(175, 0, 0, 255)";
 document.addEventListener("keydown", (event) => {
     if (inCanvas) {
@@ -1027,6 +1028,7 @@ class Renderer {
                     }
                 }
                 if (compilationSuccess) {
+                    compilationMessage.textContent = "";
                     this.renderPipeline = this.device.createRenderPipeline({
                         label: "Render pipeline",
                         vertex: {
