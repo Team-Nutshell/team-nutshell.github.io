@@ -871,10 +871,6 @@ class Renderer {
                 label: "Vertex shader module",
                 code: vertexShader
             });
-            const fragmentShaderModule = this.device.createShaderModule({
-                label: "Fragment shader module",
-                code: preDefinedFragmentShader + fragmentShader
-            });
             this.bindGroupLayout = this.device.createBindGroupLayout({
                 label: "Bind group layout",
                 entries: [{
@@ -937,29 +933,7 @@ class Renderer {
                         }
                     }]
             });
-            this.renderPipeline = this.device.createRenderPipeline({
-                label: "Render pipeline",
-                vertex: {
-                    module: this.vertexShaderModule,
-                    entryPoint: "main"
-                },
-                fragment: {
-                    module: fragmentShaderModule,
-                    entryPoint: "main",
-                    targets: [{
-                            format: "rgba16float"
-                        }]
-                },
-                primitive: {
-                    topology: "triangle-list"
-                },
-                layout: this.device.createPipelineLayout({
-                    label: "Render pipeline layout",
-                    bindGroupLayouts: [
-                        this.bindGroupLayout
-                    ]
-                })
-            });
+            refreshFragmentShader = true;
             const toSRGBFragmentShaderModule = this.device.createShaderModule({
                 label: "To SRGB fragment shader module",
                 code: toSRGBFragmentShader
