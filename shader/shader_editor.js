@@ -1124,7 +1124,7 @@ class Renderer {
             }
             const timeArrayBuffer = new ArrayBuffer(4);
             const uniformDataTime = new Float32Array(timeArrayBuffer);
-            uniformDataTime[0] = timestamp;
+            uniformDataTime[0] = timestamp / 1000.0;
             const cameraPositionArrayBuffer = new ArrayBuffer(12);
             const uniformDataCameraPosition = new Float32Array(cameraPositionArrayBuffer);
             uniformDataCameraPosition[0] = this.cameraPosition[0];

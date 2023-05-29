@@ -19,7 +19,7 @@ Use **space** to go up and **left shift** to go down.
 
 Pre-defined variables:
 ```
-time: f32 - Current timestamp, starting from 0.0 at application launch.
+time: f32 - Current timestamp in seconds, starting from 0.0 at application launch.
 cameraPosition: vec3f - Current position of the camera, starting at vec3f(0.0, 0.0, 0.0).
 cameraDirection: vec3f - Current direction of the camera, starting at vec3f(0.0, 0.0, 1.0).
 resolution: vec2u - Resolution, is 980u by 600u pixels.
