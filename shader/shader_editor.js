@@ -61,10 +61,14 @@ const toDeg = 180.0 / 3.1415926535897932384626433832795;
 const toRad = 3.1415926535897932384626433832795 / 180.0;
 var canvas = document.querySelector("#webgpuCanvas");
 var editableFragmentShader = document.querySelector("#webgpuFragmentShader");
-var url = new URL(location.href);
-const urlShaderBase64 = url.searchParams.get("s");
-if (urlShaderBase64) {
-    editableFragmentShader.textContent = atob(urlShaderBase64);
+const urlShaderBase64 = location.hash.substring(1).replace(/%3D/g, "=");
+if (urlShaderBase64.length > 0) {
+    try {
+        editableFragmentShader.textContent = atob(urlShaderBase64);
+    }
+    catch (e) {
+        editableFragmentShader.textContent = defaultFragmentShader;
+    }
 }
 else {
     editableFragmentShader.textContent = defaultFragmentShader;
@@ -171,13 +175,11 @@ document.addEventListener("click", (event) => {
         else {
             if (event.target == document.querySelector("#webgpuRefreshFragmentShader")) {
                 if (editableFragmentShader.value.replace(/\s+/g, "").length > 0) {
-                    url.searchParams.set("s", btoa(editableFragmentShader.value));
-                    history.replaceState(null, null, url);
+                    location.hash = btoa(editableFragmentShader.value);
                     refreshFragmentShader = true;
                 }
                 else {
-                    url.searchParams.delete("s");
-                    history.replaceState(null, null, url);
+                    location.hash = "";
                 }
             }
             inCanvas = false;
