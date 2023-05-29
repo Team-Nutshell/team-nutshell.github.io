@@ -74,6 +74,17 @@ else {
     editableFragmentShader.textContent = defaultFragmentShader;
 }
 var compilationMessage = document.querySelector("#webgpuFragmentShaderCompilationMessage");
+window.addEventListener("hashchange", (event) => {
+    const urlShaderBase64 = location.hash.substring(1).replace(/%3D/g, "=");
+    if (urlShaderBase64.length > 0) {
+        try {
+            editableFragmentShader.textContent = atob(urlShaderBase64);
+            refreshFragmentShader = true;
+        }
+        catch (e) {
+        }
+    }
+}, false);
 document.addEventListener("keydown", (event) => {
     if (inCanvas) {
         switch (event.code) {
