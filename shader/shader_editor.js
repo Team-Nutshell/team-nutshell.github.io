@@ -27,6 +27,7 @@ const preDefinedFragmentShader = `
 @group(0) @binding(1) var<uniform> cameraPosition: vec3f;
 @group(0) @binding(2) var<uniform> cameraDirection: vec3f;
 @group(0) @binding(3) var<uniform> resolution: vec2u;
+@group(0) @binding(4) var<uniform> mouse: vec2i;
 `;
 const defaultFragmentShader = `@fragment
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
@@ -54,6 +55,8 @@ var downPressed = false;
 var rightPressed = false;
 var spacePressed = false;
 var shiftPressed = false;
+var mouseX;
+var mouseY;
 const toDeg = 180.0 / 3.1415926535897932384626433832795;
 const toRad = 3.1415926535897932384626433832795 / 180.0;
 var canvas = document.querySelector("#webgpuCanvas");
@@ -155,6 +158,11 @@ document.addEventListener("keyup", (event) => {
         }
     }
 }, false);
+document.addEventListener('mousemove', (event) => {
+    const canvasPosition = canvas.getBoundingClientRect();
+    mouseX = event.x - canvasPosition.left;
+    mouseY = event.y - canvasPosition.top;
+}, false);
 document.addEventListener("click", (event) => {
     if (event.button == 0) {
         if (event.target == canvas) {
@@ -250,7 +258,7 @@ class Renderer {
                 maxAnisotropy: 1
             });
             this.uniformBuffer = this.device.createBuffer({
-                size: 768 + 8,
+                size: 1024 + 8,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
             this.vertexShaderModule = this.device.createShaderModule({
@@ -286,6 +294,13 @@ class Renderer {
                         buffer: {
                             type: "uniform"
                         }
+                    },
+                    {
+                        binding: 4,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        buffer: {
+                            type: "uniform"
+                        }
                     }]
             });
             this.renderPipelineBindGroup = this.device.createBindGroup({
@@ -316,6 +331,13 @@ class Renderer {
                         resource: {
                             buffer: this.uniformBuffer,
                             offset: 768
+                        }
+                    },
+                    {
+                        binding: 4,
+                        resource: {
+                            buffer: this.uniformBuffer,
+                            offset: 1024
                         }
                     }]
             });
@@ -499,10 +521,15 @@ class Renderer {
             const uniformDataResolution = new Uint32Array(resolutionArrayBuffer);
             uniformDataResolution[0] = canvas.width;
             uniformDataResolution[1] = canvas.height;
+            const mouseArrayBuffer = new ArrayBuffer(8);
+            const uniformDataMouse = new Int32Array(mouseArrayBuffer);
+            uniformDataMouse[0] = mouseX;
+            uniformDataMouse[1] = mouseY;
             this.device.queue.writeBuffer(this.uniformBuffer, 0, timeArrayBuffer, 0, 4);
             this.device.queue.writeBuffer(this.uniformBuffer, 256, cameraPositionArrayBuffer, 0, 12);
             this.device.queue.writeBuffer(this.uniformBuffer, 512, cameraDirectionArrayBuffer, 0, 12);
             this.device.queue.writeBuffer(this.uniformBuffer, 768, resolutionArrayBuffer, 0, 8);
+            this.device.queue.writeBuffer(this.uniformBuffer, 1024, mouseArrayBuffer, 0, 8);
             const commandEncoder = this.device.createCommandEncoder({
                 label: "Command encoder"
             });
