@@ -7,7 +7,7 @@
 	<canvas id="webgpuCanvas" width="980" height="600"></canvas>
 </center>
 <textarea class="highlight" id="webgpuFragmentShader" spellcheck="false" style="width: 100%; height: 600px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; resize: none;"></textarea>
-<p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(175, 0, 0);"></p>
+<p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(175, 0, 0);"></p>
 
 Click on the canvas to control the camera.
 
