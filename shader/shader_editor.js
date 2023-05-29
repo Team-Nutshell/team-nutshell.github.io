@@ -382,13 +382,13 @@ fn rayFiniteRepeat(p: vec3f, n: f32, l: vec3f) -> vec3f {
 
 // Scene
 fn pR(p: vec2f) -> vec2f {
-	let a: f32 = sin(0.5 * time / 1000.0);
+	let a: f32 = sin(0.5 * time);
 
 	return cos(a) * p.xy + sin(a) * vec2f(p.y, -p.x);
 }
 
 fn displace(p: vec3f) -> f32 {
-	return sin(p.x + 4.0 * time / 1000.0) * sin(p.y + sin(2.0 * time / 1000.0)) * sin(p.z + 6.0 * time / 1000.0);
+	return sin(p.x + 4.0 * time) * sin(p.y + sin(2.0 * time)) * sin(p.z + 6.0 * time);
 }
 
 fn scene(p: vec3f) -> Object {
