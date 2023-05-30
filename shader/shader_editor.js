@@ -412,7 +412,9 @@ class Renderer {
                         }]
                 },
                 primitive: {
-                    topology: "triangle-list"
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
                 },
                 layout: this.device.createPipelineLayout({
                     label: "To SRGB render pipeline layout",
@@ -475,7 +477,9 @@ class Renderer {
                                 }]
                         },
                         primitive: {
-                            topology: "triangle-list"
+                            topology: "triangle-list",
+                            frontFace: "ccw",
+                            cullMode: "back"
                         },
                         layout: this.device.createPipelineLayout({
                             label: "Render pipeline layout",
