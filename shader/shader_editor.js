@@ -517,7 +517,7 @@ class Renderer {
             if (aPressed) {
                 const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
                 this.cameraPosition[0] += t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] += t[1] * (this.cameraSpeed * deltaTime);
+                this.cameraPosition[2] += t[2] * (this.cameraSpeed * deltaTime);
             }
             if (sPressed) {
                 this.cameraPosition[0] -= this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
@@ -527,7 +527,7 @@ class Renderer {
             if (dPressed) {
                 const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
                 this.cameraPosition[0] -= t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] -= t[1] * (this.cameraSpeed * deltaTime);
+                this.cameraPosition[2] -= t[2] * (this.cameraSpeed * deltaTime);
             }
             if (spacePressed) {
                 this.cameraPosition[1] += this.cameraSpeed * deltaTime;
