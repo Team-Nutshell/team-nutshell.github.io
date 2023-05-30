@@ -2,6 +2,7 @@
 
 <script src="shader_editor.js" defer></script>
 <p id="webgpuCheck"></p>
+<p id="webgpuFPS"></p>
 <center>
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>

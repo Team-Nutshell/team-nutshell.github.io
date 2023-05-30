@@ -60,6 +60,11 @@ var mouseY;
 const toDeg = 180.0 / 3.1415926535897932384626433832795;
 const toRad = 3.1415926535897932384626433832795 / 180.0;
 var canvas = document.querySelector("#webgpuCanvas");
+var fps = document.querySelector("#webgpuFPS");
+var nbFrames = 0;
+var fpsTime = (new Date()).getTime();
+var fpsText = "FPS: 0";
+var frametimeText = "Frametime: 0ms";
 var editableFragmentShader = document.querySelector("#webgpuFragmentShader");
 const urlShaderBase64 = location.hash.substring(1).replace(/%3D/g, "=");
 if (urlShaderBase64.length > 0) {
@@ -418,6 +423,15 @@ class Renderer {
         return __awaiter(this, void 0, void 0, function* () {
             const deltaTime = timestamp - this.previousTime;
             this.previousTime = timestamp;
+            nbFrames++;
+            var currentTime = (new Date()).getTime();
+            if ((currentTime - fpsTime) >= 1000.0) {
+                fpsText = "FPS: " + nbFrames;
+                nbFrames = 0;
+                fpsTime += 1000.0;
+            }
+            frametimeText = "Frametime: " + deltaTime.toFixed(2) + "ms";
+            fps.textContent = fpsText + " - " + frametimeText;
             if (refreshFragmentShader) {
                 compilationMessage.textContent = "";
                 const fragmentShaderModule = this.device.createShaderModule({
