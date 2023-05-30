@@ -280,6 +280,7 @@ class Renderer {
                 maxAnisotropy: 1
             });
             this.uniformBuffer = this.device.createBuffer({
+                label: "Uniform buffer",
                 size: 1024 + 8,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
@@ -400,9 +401,20 @@ class Renderer {
             });
             this.toSRGBRenderPipeline = this.device.createRenderPipeline({
                 label: "To SRGB render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "To SRGB render pipeline layout",
+                    bindGroupLayouts: [
+                        toSRGBBindGroupLayout
+                    ]
+                }),
                 vertex: {
                     module: this.vertexShaderModule,
                     entryPoint: "main"
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
                 },
                 fragment: {
                     module: toSRGBFragmentShaderModule,
@@ -410,18 +422,7 @@ class Renderer {
                     targets: [{
                             format: navigator.gpu.getPreferredCanvasFormat()
                         }]
-                },
-                primitive: {
-                    topology: "triangle-list",
-                    frontFace: "ccw",
-                    cullMode: "back"
-                },
-                layout: this.device.createPipelineLayout({
-                    label: "To SRGB render pipeline layout",
-                    bindGroupLayouts: [
-                        toSRGBBindGroupLayout
-                    ]
-                })
+                }
             });
         });
     }
@@ -465,9 +466,20 @@ class Renderer {
                 if (compilationSuccess) {
                     this.renderPipeline = this.device.createRenderPipeline({
                         label: "Render pipeline",
+                        layout: this.device.createPipelineLayout({
+                            label: "Render pipeline layout",
+                            bindGroupLayouts: [
+                                this.bindGroupLayout
+                            ]
+                        }),
                         vertex: {
                             module: this.vertexShaderModule,
                             entryPoint: "main"
+                        },
+                        primitive: {
+                            topology: "triangle-list",
+                            frontFace: "ccw",
+                            cullMode: "back"
                         },
                         fragment: {
                             module: fragmentShaderModule,
@@ -475,18 +487,7 @@ class Renderer {
                             targets: [{
                                     format: "rgba16float"
                                 }]
-                        },
-                        primitive: {
-                            topology: "triangle-list",
-                            frontFace: "ccw",
-                            cullMode: "back"
-                        },
-                        layout: this.device.createPipelineLayout({
-                            label: "Render pipeline layout",
-                            bindGroupLayouts: [
-                                this.bindGroupLayout
-                            ]
-                        })
+                        }
                     });
                 }
                 refreshFragmentShader = false;
@@ -553,6 +554,7 @@ class Renderer {
             const renderPassEncoder = commandEncoder.beginRenderPass({
                 label: "Render pass",
                 colorAttachments: [{
+                        view: this.colorTextureView,
                         clearValue: {
                             r: 0.0,
                             g: 0.0,
@@ -560,8 +562,7 @@ class Renderer {
                             a: 0.0
                         },
                         loadOp: "clear",
-                        storeOp: "store",
-                        view: this.colorTextureView
+                        storeOp: "store"
                     }]
             });
             renderPassEncoder.setPipeline(this.renderPipeline);
@@ -571,6 +572,9 @@ class Renderer {
             const toSRGBRenderPassEncoder = commandEncoder.beginRenderPass({
                 label: "To SRGB render pass",
                 colorAttachments: [{
+                        view: this.context.getCurrentTexture().createView({
+                            label: "View"
+                        }),
                         clearValue: {
                             r: 0.0,
                             g: 0.0,
@@ -578,10 +582,7 @@ class Renderer {
                             a: 0.0
                         },
                         loadOp: "clear",
-                        storeOp: "store",
-                        view: this.context.getCurrentTexture().createView({
-                            label: "View"
-                        })
+                        storeOp: "store"
                     }]
             });
             toSRGBRenderPassEncoder.setPipeline(this.toSRGBRenderPipeline);
