@@ -338,7 +338,7 @@ class Renderer {
                         binding: 1,
                         resource: {
                             buffer: this.uniformBuffer,
-                            offset: 256,
+                            offset: 256
                         }
                     },
                     {
