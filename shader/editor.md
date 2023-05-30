@@ -6,11 +6,11 @@
 <center>
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>
-<div style="height: 275px;">
-	<textarea class="highlight" id="webgpuFragmentShader" spellcheck="false" style="width: 95%; height: 100%; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; resize: none;"></textarea>
-	<button id="webgpuRefreshFragmentShader" style="width: 5%; height: 100%; float: right;">Run</button>
+<div>
+	<textarea class="highlight" id="webgpuFragmentShader" spellcheck="false" style="width: 95%; height: 275px; min-height: 100px; max-height: 750px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; resize: vertical;"></textarea>
+	<button id="webgpuRefreshFragmentShader" style="width: 5%; height: 275px; min-height: 100px; max-height: 750px; float: right;">Run</button>
 </div>
-<p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; height: 115px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(100, 15, 0);"></p>
+<p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; height: 115px; min-height: 100px; max-height: 350px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(100, 15, 0); resize: vertical;"></p>
 
 Click on the canvas to control the camera.
 
