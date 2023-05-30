@@ -1,4 +1,4 @@
-# WebGPU Shader Editor
+# WebGPU Shader Editor (WGSL)
 
 <script src="shader_editor.js" defer></script>
 <p id="webgpuCheck"></p>
@@ -7,7 +7,7 @@
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>
 <div>
-	<textarea class="highlight" id="webgpuFragmentShader" spellcheck="false" style="width: 95%; height: 275px; min-height: 100px; max-height: 750px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; resize: vertical;"></textarea>
+	<textarea class="highlight" id="webgpuFragmentShader" spellcheck="false" style="width: 95%; height: 275px; min-height: 100px; max-height: 750px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; margin-bottom: 0px; resize: vertical;"></textarea>
 	<button id="webgpuRefreshFragmentShader" style="width: 5%; height: 275px; min-height: 100px; max-height: 750px; float: right;">Run</button>
 </div>
 <p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; height: 115px; min-height: 100px; max-height: 350px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(100, 15, 0); resize: vertical;"></p>
