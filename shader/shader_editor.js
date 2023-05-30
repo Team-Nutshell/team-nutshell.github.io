@@ -65,7 +65,11 @@ var nbFrames = 0;
 var fpsTime = (new Date()).getTime();
 var fpsText = "FPS: 0";
 var frametimeText = "Frametime: 0ms";
+var refreshButton = document.querySelector("#webgpuRefreshFragmentShader");
 var editableFragmentShader = document.querySelector("#webgpuFragmentShader");
+new ResizeObserver(() => {
+    refreshButton.style.height = editableFragmentShader.style.height;
+}).observe(editableFragmentShader);
 const urlShaderBase64 = location.hash.substring(1).replace(/%3D/g, "=");
 if (urlShaderBase64.length > 0) {
     try {
