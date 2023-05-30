@@ -281,7 +281,7 @@ class Renderer {
             });
             this.uniformBuffer = this.device.createBuffer({
                 size: 1024 + 8,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
             this.vertexShaderModule = this.device.createShaderModule({
                 label: "Vertex shader module",
@@ -535,32 +535,14 @@ class Renderer {
             if (shiftPressed) {
                 this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
             }
-            const timeArrayBuffer = new ArrayBuffer(4);
-            const uniformDataTime = new Float32Array(timeArrayBuffer);
-            uniformDataTime[0] = timestamp / 1000.0;
-            const cameraPositionArrayBuffer = new ArrayBuffer(12);
-            const uniformDataCameraPosition = new Float32Array(cameraPositionArrayBuffer);
-            uniformDataCameraPosition[0] = this.cameraPosition[0];
-            uniformDataCameraPosition[1] = this.cameraPosition[1];
-            uniformDataCameraPosition[2] = this.cameraPosition[2];
-            const cameraDirectionArrayBuffer = new ArrayBuffer(12);
-            const uniformDataCameraDirection = new Float32Array(cameraDirectionArrayBuffer);
-            uniformDataCameraDirection[0] = this.cameraDirection[0];
-            uniformDataCameraDirection[1] = this.cameraDirection[1];
-            uniformDataCameraDirection[2] = this.cameraDirection[2];
-            const resolutionArrayBuffer = new ArrayBuffer(8);
-            const uniformDataResolution = new Uint32Array(resolutionArrayBuffer);
-            uniformDataResolution[0] = canvas.width;
-            uniformDataResolution[1] = canvas.height;
-            const mouseArrayBuffer = new ArrayBuffer(8);
-            const uniformDataMouse = new Int32Array(mouseArrayBuffer);
-            uniformDataMouse[0] = mouseX;
-            uniformDataMouse[1] = mouseY;
-            this.device.queue.writeBuffer(this.uniformBuffer, 0, timeArrayBuffer, 0, 4);
-            this.device.queue.writeBuffer(this.uniformBuffer, 256, cameraPositionArrayBuffer, 0, 12);
-            this.device.queue.writeBuffer(this.uniformBuffer, 512, cameraDirectionArrayBuffer, 0, 12);
-            this.device.queue.writeBuffer(this.uniformBuffer, 768, resolutionArrayBuffer, 0, 8);
-            this.device.queue.writeBuffer(this.uniformBuffer, 1024, mouseArrayBuffer, 0, 8);
+            const uniformDataTime = new Float32Array([timestamp / 1000.0]);
+            const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
+            const uniformDataMouse = new Int32Array([mouseX, mouseY]);
+            this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformDataTime.buffer, 0, 4);
+            this.device.queue.writeBuffer(this.uniformBuffer, 256, this.cameraPosition.buffer, 0, 12);
+            this.device.queue.writeBuffer(this.uniformBuffer, 512, this.cameraDirection.buffer, 0, 12);
+            this.device.queue.writeBuffer(this.uniformBuffer, 768, uniformDataResolution.buffer, 0, 8);
+            this.device.queue.writeBuffer(this.uniformBuffer, 1024, uniformDataMouse.buffer, 0, 8);
             const commandEncoder = this.device.createCommandEncoder({
                 label: "Command encoder"
             });
