@@ -28,35 +28,25 @@ fn main(@location(0) position: vec3f,
 	return output;
 }
 `;
-const solidColorFragmentShader = `
+const fragmentShader = `
 @group(0) @binding(1) var<uniform> time: f32;
 @group(0) @binding(2) var<uniform> resolution: vec2u;
 @group(0) @binding(3) var<uniform> mouse: vec2i;
 
 @fragment
-fn main(@location(0) normal: vec3f,
+fn solidColorMain(@location(0) normal: vec3f,
 		@location(1) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(1.0, 0.0, 0.0, 1.0);
 }
-`;
-const normalFragmentShader = `
-@group(0) @binding(1) var<uniform> time: f32;
-@group(0) @binding(2) var<uniform> resolution: vec2u;
-@group(0) @binding(3) var<uniform> mouse: vec2i;
 
 @fragment
-fn main(@location(0) normal: vec3f,
+fn normalMain(@location(0) normal: vec3f,
 		@location(1) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(normal, 1.0);
 }
-`;
-const uvFragmentShader = `
-@group(0) @binding(1) var<uniform> time: f32;
-@group(0) @binding(2) var<uniform> resolution: vec2u;
-@group(0) @binding(3) var<uniform> mouse: vec2i;
 
 @fragment
-fn main(@location(0) normal: vec3f,
+fn uvMain(@location(0) normal: vec3f,
 		@location(1) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(uv, 0.0, 1.0);
 }
@@ -507,17 +497,9 @@ class Renderer {
                 label: "Vertex shader module",
                 code: vertexShader
             });
-            const solidColorFragmentShaderModule = this.device.createShaderModule({
-                label: "Solid color fragment shader module",
-                code: solidColorFragmentShader
-            });
-            const normalFragmentShaderModule = this.device.createShaderModule({
-                label: "Normal fragment shader module",
-                code: normalFragmentShader
-            });
-            const uvFragmentShaderModule = this.device.createShaderModule({
-                label: "UV fragment shader module",
-                code: uvFragmentShader
+            const fragmentShaderModule = this.device.createShaderModule({
+                label: "Fragment shader module",
+                code: fragmentShader
             });
             this.bindGroupLayout = this.device.createBindGroupLayout({
                 label: "Bind group layout",
@@ -623,8 +605,8 @@ class Renderer {
                     depthCompare: "less"
                 },
                 fragment: {
-                    module: solidColorFragmentShaderModule,
-                    entryPoint: "main",
+                    module: fragmentShaderModule,
+                    entryPoint: "solidColorMain",
                     targets: [{
                             format: "rgba16float"
                         }]
@@ -672,8 +654,8 @@ class Renderer {
                     depthCompare: "less"
                 },
                 fragment: {
-                    module: normalFragmentShaderModule,
-                    entryPoint: "main",
+                    module: fragmentShaderModule,
+                    entryPoint: "normalMain",
                     targets: [{
                             format: "rgba16float"
                         }]
@@ -721,8 +703,8 @@ class Renderer {
                     depthCompare: "less"
                 },
                 fragment: {
-                    module: uvFragmentShaderModule,
-                    entryPoint: "main",
+                    module: fragmentShaderModule,
+                    entryPoint: "uvMain",
                     targets: [{
                             format: "rgba16float"
                         }]
