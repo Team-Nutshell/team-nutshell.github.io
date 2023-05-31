@@ -51,6 +51,18 @@ fn uvMain(@location(0) position: vec3f,
 
 	return output;
 }
+
+struct vertexVertexShaderOutput {
+	@builtin(position) pos: vec4f
+}
+
+@vertex
+fn vertexMain(@location(0) position: vec3f) -> vertexVertexShaderOutput {
+	var output: vertexVertexShaderOutput;
+	output.pos = cameraViewProj * vec4f(position, 1.0);
+
+	return output;
+}
 `;
 const fragmentShader = `
 @group(0) @binding(1) var<uniform> time: f32;
@@ -721,6 +733,45 @@ class Renderer {
                         }]
                 }
             });
+            this.vertexRenderPipeline = this.device.createRenderPipeline({
+                label: "Vertex render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Vertex render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "vertexMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "solidColorMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
             const toSRGBVertexShaderModule = this.device.createShaderModule({
                 label: "To SRGB vertex shader module",
                 code: toSRGBVertexShader
@@ -899,6 +950,9 @@ class Renderer {
             else if (renderingModeSelection.value == "uv") {
                 renderPassEncoder.setPipeline(this.uvRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "vertices") {
+                renderPassEncoder.setPipeline(this.vertexRenderPipeline);
             }
             renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
             renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);

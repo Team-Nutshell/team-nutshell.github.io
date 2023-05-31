@@ -15,6 +15,7 @@
 			<option value="solidColor">Solid Color</option>
 			<option value="normals">Normals</option>
 			<option value="uv">UV</option>
+			<option value="vertices">Vertices</option>
 		</select>
 	</div>
 </div>
