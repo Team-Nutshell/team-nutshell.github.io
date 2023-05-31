@@ -123,11 +123,13 @@ var mouseX;
 var mouseY;
 const toDeg = 180.0 / 3.1415926535897932384626433832795;
 const toRad = 3.1415926535897932384626433832795 / 180.0;
-var reloadMesh = false;
+var reloadModel = false;
 var dataVertexPositions;
 var dataVertexNormals;
 var dataVertexUV;
 var dataIndices;
+var providesNormals = false;
+var providesUV = false;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
 var nbFrames = 0;
@@ -306,8 +308,8 @@ var nbTriangles = 0;
 fileSelector.addEventListener("change", (event) => {
     const file = fileSelector.files[0];
     const extension = file.name.substring(file.name.indexOf("."));
-    if (extension != ".obj") {
-        fileCheck.textContent = "\"" + extension + "\" model format is unsupported.";
+    if (extension != ".obj" && extension != ".pcd") {
+        fileCheck.textContent = "\"" + extension + "\" format is unsupported.";
         return;
     }
     else {
@@ -315,8 +317,8 @@ fileSelector.addEventListener("change", (event) => {
         fileReader.readAsText(file);
     }
 }, false);
-fileReader.addEventListener("loadend", (event) => {
-    const lines = event.target.result.toString().split("\n");
+function loadObj(reader) {
+    const lines = reader.result.toString().split("\n");
     var positions = [];
     var normals = [];
     var uv = [];
@@ -345,9 +347,11 @@ fileReader.addEventListener("loadend", (event) => {
         }
         else if (tokens[0] == "vn") {
             normals.push(new Float32Array([parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])]));
+            providesNormals = true;
         }
         else if (tokens[0] == "vt") {
             uv.push(new Float32Array([parseFloat(tokens[1]), parseFloat(tokens[2])]));
+            providesUV = true;
         }
         else if (tokens[0] == "f") {
             var tmpIndices = [];
@@ -399,13 +403,110 @@ fileReader.addEventListener("loadend", (event) => {
             }
         }
     }
-    dataVertexPositions = new Float32Array(verticesPositions);
-    dataVertexNormals = new Float32Array(verticesNormals);
-    dataVertexUV = new Float32Array(verticesUV);
-    dataIndices = new Uint32Array(indices);
     nbVertices = vertexCount;
     nbTriangles = dataIndices.length / 3;
-    reloadMesh = true;
+    dataVertexPositions = new Float32Array(verticesPositions);
+    if (providesNormals) {
+        dataVertexNormals = new Float32Array(verticesNormals);
+    }
+    else {
+        dataVertexNormals = new Float32Array(nbVertices * 3);
+    }
+    if (providesUV) {
+        dataVertexUV = new Float32Array(verticesUV);
+    }
+    else {
+        dataVertexUV = new Float32Array(nbVertices * 2);
+    }
+    dataIndices = new Uint32Array(indices);
+}
+function loadPcd(reader) {
+    const lines = reader.result.toString().split("\n");
+    var verticesPositions = [];
+    var verticesNormals = [];
+    var positionStart = 0;
+    var normalStart = -1;
+    for (let line of lines) {
+        if (line.length == 0) {
+            continue;
+        }
+        if (line[0] == "#") {
+            continue;
+        }
+        var tokens = [];
+        var spacePosition;
+        while ((spacePosition = line.indexOf(" ")) != -1) {
+            tokens.push(line.substring(0, spacePosition));
+            line = line.substring(spacePosition + 1);
+        }
+        tokens.push(line);
+        if (tokens[0] == "VERSION") {
+            continue;
+        }
+        if (tokens[0] == "FIELDS") {
+            for (let i = 1; i < tokens.length; i++) {
+                if (tokens[i] == "x") {
+                    positionStart = i - 1;
+                }
+                else if (tokens[i] == "normal_x") {
+                    normalStart = i - 1;
+                    providesNormals = true;
+                }
+            }
+        }
+        if (tokens[0] == "SIZE") {
+            continue;
+        }
+        if (tokens[0] == "TYPE") {
+            continue;
+        }
+        if (tokens[0] == "WIDTH") {
+            continue;
+        }
+        if (tokens[0] == "HEIGHT") {
+            continue;
+        }
+        if (tokens[0] == "VIEWPOINT") {
+            continue;
+        }
+        if (tokens[0] == "POINTS") {
+            continue;
+        }
+        if (tokens[0] == "DATA") {
+            continue;
+        }
+        verticesPositions.push(parseFloat(tokens[positionStart]));
+        verticesPositions.push(-parseFloat(tokens[positionStart + 1]));
+        verticesPositions.push(parseFloat(tokens[positionStart + 2]));
+        if (normalStart != -1) {
+            verticesNormals.push(parseFloat(tokens[normalStart]));
+            verticesNormals.push(parseFloat(tokens[normalStart + 1]));
+            verticesNormals.push(parseFloat(tokens[normalStart + 2]));
+        }
+    }
+    nbVertices = verticesPositions.length / 3;
+    nbTriangles = 0;
+    dataVertexPositions = new Float32Array(verticesPositions);
+    if (providesNormals) {
+        dataVertexNormals = new Float32Array(verticesNormals);
+    }
+    else {
+        dataVertexNormals = new Float32Array(nbVertices * 3);
+    }
+    dataVertexUV = new Float32Array(nbVertices * 2);
+    dataIndices = new Uint32Array(0);
+}
+fileReader.addEventListener("loadend", (event) => {
+    providesNormals = false;
+    providesUV = false;
+    const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.indexOf("."));
+    if (extension == ".obj") {
+        loadObj(fileReader);
+    }
+    else if (extension == ".pcd") {
+        loadPcd(fileReader);
+    }
+    reloadModel = true;
 }, false);
 class Renderer {
     constructor() {
@@ -522,7 +623,9 @@ class Renderer {
             dataIndices = new Uint32Array([0, 1, 2]);
             nbVertices = 3;
             nbTriangles = 1;
-            reloadMesh = true;
+            providesNormals = true;
+            providesUV = true;
+            reloadModel = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
                 size: 768 + 8,
@@ -898,14 +1001,16 @@ class Renderer {
             if (shiftPressed) {
                 this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
             }
-            if (reloadMesh) {
+            if (reloadModel) {
                 this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
                 this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
                 this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
-                this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
+                if (dataIndices.length > 0) {
+                    this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
+                }
                 this.mesh.indexCount = dataIndices.length;
-                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles;
-                reloadMesh = false;
+                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No");
+                reloadModel = false;
             }
             const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
             const uniformDataTime = new Float32Array([timestamp / 1000.0]);
@@ -939,24 +1044,29 @@ class Renderer {
                     depthReadOnly: false
                 }
             });
+            renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
             renderPassEncoder.setVertexBuffer(0, this.positionVertexBuffer, 0, this.positionVertexBuffer.size);
             if (renderingModeSelection.value == "solidColor") {
                 renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
+                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             }
             else if (renderingModeSelection.value == "normals") {
                 renderPassEncoder.setPipeline(this.normalRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             }
             else if (renderingModeSelection.value == "uv") {
                 renderPassEncoder.setPipeline(this.uvRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             }
             else if (renderingModeSelection.value == "vertices") {
                 renderPassEncoder.setPipeline(this.vertexRenderPipeline);
+                renderPassEncoder.draw(nbVertices, 1, 0, 0);
             }
-            renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
-            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             renderPassEncoder.end();
             const toSRGBRenderPassEncoder = commandEncoder.beginRenderPass({
                 label: "To SRGB render pass",
