@@ -8,7 +8,7 @@
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>
 <div>
-	<input id="webgpuFile" type="file" accept=".obj">
+	<input id="webgpuFile" type="file" accept=".obj,.pcd">
 	<div style="float: right">
 		Rendering mode:
 		<select name="Rendering mode" id="webgpuRenderingMode">
