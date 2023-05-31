@@ -7,7 +7,17 @@
 <center>
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>
-<input id="webgpuFile" type="file" accept=".obj">
+<div>
+	<input id="webgpuFile" type="file" accept=".obj">
+	<div style="float: right">
+		Rendering mode:
+		<select name="Rendering mode" id="webgpuRenderingMode">
+			<option value="solidColor">Solid Color</option>
+			<option value="normals">Normals</option>
+			<option value="uv">UV</option>
+		</select>
+	</div>
+</div>
 <p id="webgpuFileCheck"></p>
 
 Click on the canvas to control the camera.

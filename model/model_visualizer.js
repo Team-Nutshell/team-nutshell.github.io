@@ -28,7 +28,18 @@ fn main(@location(0) position: vec3f,
 	return output;
 }
 `;
-const fragmentShader = `
+const solidColorFragmentShader = `
+@group(0) @binding(1) var<uniform> time: f32;
+@group(0) @binding(2) var<uniform> resolution: vec2u;
+@group(0) @binding(3) var<uniform> mouse: vec2i;
+
+@fragment
+fn main(@location(0) normal: vec3f,
+		@location(1) uv: vec2f) -> @location(0) vec4f {
+	return vec4f(1.0, 0.0, 0.0, 1.0);
+}
+`;
+const normalFragmentShader = `
 @group(0) @binding(1) var<uniform> time: f32;
 @group(0) @binding(2) var<uniform> resolution: vec2u;
 @group(0) @binding(3) var<uniform> mouse: vec2i;
@@ -37,6 +48,17 @@ const fragmentShader = `
 fn main(@location(0) normal: vec3f,
 		@location(1) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(normal, 1.0);
+}
+`;
+const uvFragmentShader = `
+@group(0) @binding(1) var<uniform> time: f32;
+@group(0) @binding(2) var<uniform> resolution: vec2u;
+@group(0) @binding(3) var<uniform> mouse: vec2i;
+
+@fragment
+fn main(@location(0) normal: vec3f,
+		@location(1) uv: vec2f) -> @location(0) vec4f {
+	return vec4f(uv, 0.0, 1.0);
 }
 `;
 const toSRGBVertexShader = `
@@ -87,6 +109,7 @@ var nbFrames = 0;
 var fpsTime = (new Date()).getTime();
 var fpsText = "FPS: 0";
 var frametimeText = "Frametime: 0ms";
+var renderingModeSelection = document.querySelector("#webgpuRenderingMode");
 document.addEventListener("keydown", (event) => {
     if (inCanvas) {
         switch (event.code) {
@@ -484,9 +507,17 @@ class Renderer {
                 label: "Vertex shader module",
                 code: vertexShader
             });
-            const fragmentShaderModule = this.device.createShaderModule({
-                label: "Fragment shader module",
-                code: fragmentShader
+            const solidColorFragmentShaderModule = this.device.createShaderModule({
+                label: "Solid color fragment shader module",
+                code: solidColorFragmentShader
+            });
+            const normalFragmentShaderModule = this.device.createShaderModule({
+                label: "Normal fragment shader module",
+                code: normalFragmentShader
+            });
+            const uvFragmentShaderModule = this.device.createShaderModule({
+                label: "UV fragment shader module",
+                code: uvFragmentShader
             });
             this.bindGroupLayout = this.device.createBindGroupLayout({
                 label: "Bind group layout",
@@ -550,10 +581,10 @@ class Renderer {
                         }
                     }]
             });
-            this.renderPipeline = this.device.createRenderPipeline({
-                label: "Render pipeline",
+            this.solidColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Solid color render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Render pipeline layout",
+                    label: "Solid color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -592,7 +623,105 @@ class Renderer {
                     depthCompare: "less"
                 },
                 fragment: {
-                    module: fragmentShaderModule,
+                    module: solidColorFragmentShaderModule,
+                    entryPoint: "main",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.normalRenderPipeline = this.device.createRenderPipeline({
+                label: "Normal render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Normal render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "main",
+                    buffers: [{
+                            arrayStride: 32,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                },
+                                {
+                                    format: "float32x3",
+                                    offset: 12,
+                                    shaderLocation: 1
+                                },
+                                {
+                                    format: "float32x2",
+                                    offset: 24,
+                                    shaderLocation: 2
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: normalFragmentShaderModule,
+                    entryPoint: "main",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.uvRenderPipeline = this.device.createRenderPipeline({
+                label: "UV render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "UV render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "main",
+                    buffers: [{
+                            arrayStride: 32,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                },
+                                {
+                                    format: "float32x3",
+                                    offset: 12,
+                                    shaderLocation: 1
+                                },
+                                {
+                                    format: "float32x2",
+                                    offset: 24,
+                                    shaderLocation: 2
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: uvFragmentShaderModule,
                     entryPoint: "main",
                     targets: [{
                             format: "rgba16float"
@@ -764,7 +893,15 @@ class Renderer {
                     depthReadOnly: false
                 }
             });
-            renderPassEncoder.setPipeline(this.renderPipeline);
+            if (renderingModeSelection.value == "solidColor") {
+                renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
+            }
+            else if (renderingModeSelection.value == "normals") {
+                renderPassEncoder.setPipeline(this.normalRenderPipeline);
+            }
+            else if (renderingModeSelection.value == "uv") {
+                renderPassEncoder.setPipeline(this.uvRenderPipeline);
+            }
             renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
             renderPassEncoder.setVertexBuffer(0, this.vertexBuffer, 0, this.vertexBuffer.size);
             renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
