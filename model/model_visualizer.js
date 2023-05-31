@@ -8,21 +8,45 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const vertexShader = `
-struct VertexShaderOutput {
-	@builtin(position) pos: vec4f,
-	@location(0) normal: vec3f,
-	@location(1) uv: vec2f
-}
-
 @group(0) @binding(0) var<uniform> cameraViewProj: mat4x4f;
 
+struct SolidColorVertexShaderOutput {
+	@builtin(position) pos: vec4f
+}
+
 @vertex
-fn main(@location(0) position: vec3f,
-		@location(1) normal: vec3f,
-		@location(2) uv: vec2f) -> VertexShaderOutput {
-	var output: VertexShaderOutput;
+fn solidColorMain(@location(0) position: vec3f) -> SolidColorVertexShaderOutput {
+	var output: SolidColorVertexShaderOutput;
+	output.pos = cameraViewProj * vec4f(position, 1.0);
+
+	return output;
+}
+
+struct NormalVertexShaderOutput {
+	@builtin(position) pos: vec4f,
+	@location(0) normal: vec3f
+}
+
+@vertex
+fn normalMain(@location(0) position: vec3f,
+				@location(1) normal: vec3f) -> NormalVertexShaderOutput {
+	var output: NormalVertexShaderOutput;
 	output.pos = cameraViewProj * vec4f(position, 1.0);
 	output.normal = normal;
+
+	return output;
+}
+
+struct UVVertexShaderOutput {
+	@builtin(position) pos: vec4f,
+	@location(0) uv: vec2f
+}
+
+@vertex
+fn uvMain(@location(0) position: vec3f,
+			@location(1) uv: vec2f) -> UVVertexShaderOutput {
+	var output: UVVertexShaderOutput;
+	output.pos = cameraViewProj * vec4f(position, 1.0);
 	output.uv = uv;
 
 	return output;
@@ -34,20 +58,17 @@ const fragmentShader = `
 @group(0) @binding(3) var<uniform> mouse: vec2i;
 
 @fragment
-fn solidColorMain(@location(0) normal: vec3f,
-		@location(1) uv: vec2f) -> @location(0) vec4f {
+fn solidColorMain() -> @location(0) vec4f {
 	return vec4f(1.0, 0.0, 0.0, 1.0);
 }
 
 @fragment
-fn normalMain(@location(0) normal: vec3f,
-		@location(1) uv: vec2f) -> @location(0) vec4f {
+fn normalMain(@location(0) normal: vec3f) -> @location(0) vec4f {
 	return vec4f(normal, 1.0);
 }
 
 @fragment
-fn uvMain(@location(0) normal: vec3f,
-		@location(1) uv: vec2f) -> @location(0) vec4f {
+fn uvMain(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(uv, 0.0, 1.0);
 }
 `;
@@ -91,7 +112,9 @@ var mouseY;
 const toDeg = 180.0 / 3.1415926535897932384626433832795;
 const toRad = 3.1415926535897932384626433832795 / 180.0;
 var reloadMesh = false;
-var dataVertices;
+var dataVertexPositions;
+var dataVertexNormals;
+var dataVertexUV;
 var dataIndices;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
@@ -268,8 +291,6 @@ var fileSelector = document.querySelector("#webgpuFile");
 var modelInformation = document.querySelector("#webgpuModelInformation");
 var nbVertices = 0;
 var nbTriangles = 0;
-var providesNormals = false;
-var providesUvs = false;
 fileSelector.addEventListener("change", (event) => {
     const file = fileSelector.files[0];
     const extension = file.name.substring(file.name.indexOf("."));
@@ -283,14 +304,14 @@ fileSelector.addEventListener("change", (event) => {
     }
 }, false);
 fileReader.addEventListener("loadend", (event) => {
-    providesNormals = false;
-    providesUvs = false;
     const lines = event.target.result.toString().split("\n");
     var positions = [];
     var normals = [];
-    var uvs = [];
+    var uv = [];
     var uniqueVertices = new Map();
-    var vertices = [];
+    var verticesPositions = [];
+    var verticesNormals = [];
+    var verticesUV = [];
     var vertexCount = 0;
     var indices = [];
     for (let line of lines) {
@@ -314,17 +335,12 @@ fileReader.addEventListener("loadend", (event) => {
             normals.push(new Float32Array([parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3])]));
         }
         else if (tokens[0] == "vt") {
-            uvs.push(new Float32Array([parseFloat(tokens[1]), parseFloat(tokens[2])]));
+            uv.push(new Float32Array([parseFloat(tokens[1]), parseFloat(tokens[2])]));
         }
         else if (tokens[0] == "f") {
             var tmpIndices = [];
             for (let token of tokens.slice(1)) {
                 if (!uniqueVertices.has(token)) {
-                    var vertex = {
-                        position: new Float32Array([0.0, 0.0, 0.0]),
-                        normal: new Float32Array([0.0, 0.0, 0.0]),
-                        uv: new Float32Array([0.0, 0.0])
-                    };
                     var faceIndices = [];
                     var tmpToken = token;
                     var slashPosition;
@@ -336,27 +352,22 @@ fileReader.addEventListener("loadend", (event) => {
                     for (let i = 0; i < faceIndices.length; i++) {
                         if (faceIndices[i].length > 0) {
                             if (i == 0) {
-                                vertex.position = positions[parseInt(faceIndices[i]) - 1];
+                                verticesPositions.push(positions[parseInt(faceIndices[i]) - 1][0]);
+                                verticesPositions.push(positions[parseInt(faceIndices[i]) - 1][1]);
+                                verticesPositions.push(positions[parseInt(faceIndices[i]) - 1][2]);
                             }
                             else if (i == 1) {
-                                vertex.uv = uvs[parseInt(faceIndices[i]) - 1];
-                                providesUvs = true;
+                                verticesUV.push(uv[parseInt(faceIndices[i]) - 1][0]);
+                                verticesUV.push(uv[parseInt(faceIndices[i]) - 1][1]);
                             }
                             else if (i == 2) {
-                                vertex.normal = normals[parseInt(faceIndices[i]) - 1];
-                                providesNormals = true;
+                                verticesNormals.push(normals[parseInt(faceIndices[i]) - 1][0]);
+                                verticesNormals.push(normals[parseInt(faceIndices[i]) - 1][1]);
+                                verticesNormals.push(normals[parseInt(faceIndices[i]) - 1][2]);
                             }
                         }
                     }
                     uniqueVertices[token] = vertexCount;
-                    vertices.push(vertex.position[0]);
-                    vertices.push(vertex.position[1]);
-                    vertices.push(vertex.position[2]);
-                    vertices.push(vertex.normal[0]);
-                    vertices.push(vertex.normal[1]);
-                    vertices.push(vertex.normal[2]);
-                    vertices.push(vertex.uv[0]);
-                    vertices.push(vertex.uv[1]);
                     vertexCount++;
                 }
                 tmpIndices.push(uniqueVertices[token]);
@@ -376,7 +387,9 @@ fileReader.addEventListener("loadend", (event) => {
             }
         }
     }
-    dataVertices = new Float32Array(vertices);
+    dataVertexPositions = new Float32Array(verticesPositions);
+    dataVertexNormals = new Float32Array(verticesNormals);
+    dataVertexUV = new Float32Array(verticesUV);
     dataIndices = new Uint32Array(indices);
     nbVertices = vertexCount;
     nbTriangles = dataIndices.length / 3;
@@ -463,7 +476,15 @@ class Renderer {
             this.depthTextureView = this.depthTexture.createView({
                 label: "Depth texture view"
             });
-            this.vertexBuffer = this.device.createBuffer({
+            this.positionVertexBuffer = this.device.createBuffer({
+                size: 268435456,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+            });
+            this.normalVertexBuffer = this.device.createBuffer({
+                size: 268435456,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+            });
+            this.uvVertexBuffer = this.device.createBuffer({
                 size: 268435456,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
@@ -471,22 +492,24 @@ class Renderer {
                 size: 268435456,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
             });
-            dataVertices = new Float32Array([
+            dataVertexPositions = new Float32Array([
                 0.0, 0.5, 0.0,
-                0.0, 0.0, -1.0,
-                0.5, 0.5,
                 0.5, -0.5, 0.0,
+                -0.5, -0.5, 0.0
+            ]);
+            dataVertexNormals = new Float32Array([
                 0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0
+            ]);
+            dataVertexUV = new Float32Array([
                 0.5, 0.5,
-                -0.5, -0.5, 0.0,
-                0.0, 0.0, -1.0,
+                0.5, 0.5,
                 0.5, 0.5
             ]);
             dataIndices = new Uint32Array([0, 1, 2]);
             nbVertices = 3;
             nbTriangles = 1;
-            providesNormals = true;
-            providesUvs = true;
             reloadMesh = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
@@ -573,24 +596,14 @@ class Renderer {
                 }),
                 vertex: {
                     module: vertexShaderModule,
-                    entryPoint: "main",
+                    entryPoint: "solidColorMain",
                     buffers: [{
-                            arrayStride: 32,
+                            arrayStride: 12,
                             stepMode: "vertex",
                             attributes: [{
                                     format: "float32x3",
                                     offset: 0,
                                     shaderLocation: 0
-                                },
-                                {
-                                    format: "float32x3",
-                                    offset: 12,
-                                    shaderLocation: 1
-                                },
-                                {
-                                    format: "float32x2",
-                                    offset: 24,
-                                    shaderLocation: 2
                                 }]
                         }]
                 },
@@ -622,24 +635,23 @@ class Renderer {
                 }),
                 vertex: {
                     module: vertexShaderModule,
-                    entryPoint: "main",
+                    entryPoint: "normalMain",
                     buffers: [{
-                            arrayStride: 32,
+                            arrayStride: 12,
                             stepMode: "vertex",
                             attributes: [{
                                     format: "float32x3",
                                     offset: 0,
                                     shaderLocation: 0
-                                },
-                                {
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
                                     format: "float32x3",
-                                    offset: 12,
+                                    offset: 0,
                                     shaderLocation: 1
-                                },
-                                {
-                                    format: "float32x2",
-                                    offset: 24,
-                                    shaderLocation: 2
                                 }]
                         }]
                 },
@@ -671,24 +683,23 @@ class Renderer {
                 }),
                 vertex: {
                     module: vertexShaderModule,
-                    entryPoint: "main",
+                    entryPoint: "uvMain",
                     buffers: [{
-                            arrayStride: 32,
+                            arrayStride: 12,
                             stepMode: "vertex",
                             attributes: [{
                                     format: "float32x3",
                                     offset: 0,
                                     shaderLocation: 0
-                                },
-                                {
-                                    format: "float32x3",
-                                    offset: 12,
-                                    shaderLocation: 1
-                                },
-                                {
+                                }]
+                        },
+                        {
+                            arrayStride: 8,
+                            stepMode: "vertex",
+                            attributes: [{
                                     format: "float32x2",
-                                    offset: 24,
-                                    shaderLocation: 2
+                                    offset: 0,
+                                    shaderLocation: 1
                                 }]
                         }]
                 },
@@ -837,10 +848,12 @@ class Renderer {
                 this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
             }
             if (reloadMesh) {
-                this.device.queue.writeBuffer(this.vertexBuffer, 0, dataVertices.buffer, 0, dataVertices.length * 4);
+                this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
+                this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
+                this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
                 this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
                 this.mesh.indexCount = dataIndices.length;
-                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUvs ? "Yes" : "No");
+                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles;
                 reloadMesh = false;
             }
             const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
@@ -875,17 +888,19 @@ class Renderer {
                     depthReadOnly: false
                 }
             });
+            renderPassEncoder.setVertexBuffer(0, this.positionVertexBuffer, 0, this.positionVertexBuffer.size);
             if (renderingModeSelection.value == "solidColor") {
                 renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
             }
             else if (renderingModeSelection.value == "normals") {
                 renderPassEncoder.setPipeline(this.normalRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
             }
             else if (renderingModeSelection.value == "uv") {
                 renderPassEncoder.setPipeline(this.uvRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
             }
             renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
-            renderPassEncoder.setVertexBuffer(0, this.vertexBuffer, 0, this.vertexBuffer.size);
             renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
             renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             renderPassEncoder.end();
