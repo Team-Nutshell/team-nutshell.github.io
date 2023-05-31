@@ -404,7 +404,7 @@ function loadObj(reader) {
         }
     }
     nbVertices = vertexCount;
-    nbTriangles = dataIndices.length / 3;
+    nbTriangles = indices.length / 3;
     dataVertexPositions = new Float32Array(verticesPositions);
     if (providesNormals) {
         dataVertexNormals = new Float32Array(verticesNormals);
