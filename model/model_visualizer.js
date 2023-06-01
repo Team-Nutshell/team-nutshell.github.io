@@ -1130,173 +1130,171 @@ class Renderer {
         });
     }
     update(timestamp) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const deltaTime = timestamp - this.previousTime;
-            this.previousTime = timestamp;
-            nbFrames++;
-            var currentTime = (new Date()).getTime();
-            if ((currentTime - fpsTime) >= 1000.0) {
-                fpsText = "FPS: " + nbFrames;
-                nbFrames = 0;
-                fpsTime += 1000.0;
+        const deltaTime = timestamp - this.previousTime;
+        this.previousTime = timestamp;
+        nbFrames++;
+        var currentTime = (new Date()).getTime();
+        if ((currentTime - fpsTime) >= 1000.0) {
+            fpsText = "FPS: " + nbFrames;
+            nbFrames = 0;
+            fpsTime += 1000.0;
+        }
+        frametimeText = "Frametime: " + deltaTime.toFixed(2) + "ms";
+        fps.textContent = fpsText + " - " + frametimeText;
+        var xOffset = 0.0;
+        var yOffset = 0.0;
+        if (upPressed) {
+            yOffset -= this.cameraSensitivity * deltaTime;
+        }
+        if (leftPressed) {
+            xOffset += this.cameraSensitivity * deltaTime;
+        }
+        if (downPressed) {
+            yOffset += this.cameraSensitivity * deltaTime;
+        }
+        if (rightPressed) {
+            xOffset -= this.cameraSensitivity * deltaTime;
+        }
+        this.cameraYaw = (this.cameraYaw + xOffset) % 360.0;
+        this.cameraPitch = Math.max(-89.0, Math.min(89.0, this.cameraPitch + yOffset));
+        const yawRad = this.cameraYaw * toRad;
+        const pitchRad = this.cameraPitch * toRad;
+        this.cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
+        this.cameraDirection[1] = -Math.sin(pitchRad);
+        this.cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
+        this.cameraDirection = normalize(this.cameraDirection);
+        if (wPressed) {
+            this.cameraPosition[0] += this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[1] += this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[2] += this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+        }
+        if (aPressed) {
+            const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
+            this.cameraPosition[0] += t[0] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[2] += t[2] * (this.cameraSpeed * deltaTime);
+        }
+        if (sPressed) {
+            this.cameraPosition[0] -= this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[1] -= this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[2] -= this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+        }
+        if (dPressed) {
+            const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
+            this.cameraPosition[0] -= t[0] * (this.cameraSpeed * deltaTime);
+            this.cameraPosition[2] -= t[2] * (this.cameraSpeed * deltaTime);
+        }
+        if (spacePressed) {
+            this.cameraPosition[1] += this.cameraSpeed * deltaTime;
+        }
+        if (shiftPressed) {
+            this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
+        }
+        if (reloadModel) {
+            this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
+            this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
+            this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
+            this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.length * 4);
+            if (dataIndices.length > 0) {
+                this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
             }
-            frametimeText = "Frametime: " + deltaTime.toFixed(2) + "ms";
-            fps.textContent = fpsText + " - " + frametimeText;
-            var xOffset = 0.0;
-            var yOffset = 0.0;
-            if (upPressed) {
-                yOffset -= this.cameraSensitivity * deltaTime;
-            }
-            if (leftPressed) {
-                xOffset += this.cameraSensitivity * deltaTime;
-            }
-            if (downPressed) {
-                yOffset += this.cameraSensitivity * deltaTime;
-            }
-            if (rightPressed) {
-                xOffset -= this.cameraSensitivity * deltaTime;
-            }
-            this.cameraYaw = (this.cameraYaw + xOffset) % 360.0;
-            this.cameraPitch = Math.max(-89.0, Math.min(89.0, this.cameraPitch + yOffset));
-            const yawRad = this.cameraYaw * toRad;
-            const pitchRad = this.cameraPitch * toRad;
-            this.cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
-            this.cameraDirection[1] = -Math.sin(pitchRad);
-            this.cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
-            this.cameraDirection = normalize(this.cameraDirection);
-            if (wPressed) {
-                this.cameraPosition[0] += this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[1] += this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] += this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
-            }
-            if (aPressed) {
-                const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-                this.cameraPosition[0] += t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] += t[2] * (this.cameraSpeed * deltaTime);
-            }
-            if (sPressed) {
-                this.cameraPosition[0] -= this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[1] -= this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] -= this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
-            }
-            if (dPressed) {
-                const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-                this.cameraPosition[0] -= t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] -= t[2] * (this.cameraSpeed * deltaTime);
-            }
-            if (spacePressed) {
-                this.cameraPosition[1] += this.cameraSpeed * deltaTime;
-            }
-            if (shiftPressed) {
-                this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
-            }
-            if (reloadModel) {
-                this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
-                this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
-                this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
-                this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.length * 4);
-                if (dataIndices.length > 0) {
-                    this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
-                }
-                this.mesh.indexCount = dataIndices.length;
-                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No");
-                reloadModel = false;
-            }
-            const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
-            const uniformDataTime = new Float32Array([timestamp / 1000.0]);
-            const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
-            const uniformDataMouse = new Int32Array([mouseX, mouseY]);
-            this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformDataCameraViewProj.buffer, 0, 64);
-            this.device.queue.writeBuffer(this.uniformBuffer, 256, uniformDataTime.buffer, 0, 4);
-            this.device.queue.writeBuffer(this.uniformBuffer, 512, uniformDataResolution.buffer, 0, 8);
-            this.device.queue.writeBuffer(this.uniformBuffer, 768, uniformDataMouse.buffer, 0, 8);
-            const commandEncoder = this.device.createCommandEncoder({
-                label: "Command encoder"
-            });
-            const renderPassEncoder = commandEncoder.beginRenderPass({
-                label: "Render pass",
-                colorAttachments: [{
-                        view: this.colorTextureView,
-                        clearValue: {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 0.0
-                        },
-                        loadOp: "clear",
-                        storeOp: "store"
-                    }],
-                depthStencilAttachment: {
-                    view: this.depthTextureView,
-                    depthClearValue: 1.0,
-                    depthLoadOp: "clear",
-                    depthStoreOp: "store",
-                    depthReadOnly: false
-                }
-            });
-            renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
-            renderPassEncoder.setVertexBuffer(0, this.positionVertexBuffer, 0, this.positionVertexBuffer.size);
-            if (renderingModeSelection.value == "solidColor") {
-                renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
-                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-            }
-            else if (renderingModeSelection.value == "normals") {
-                renderPassEncoder.setPipeline(this.normalRenderPipeline);
-                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
-                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-            }
-            else if (renderingModeSelection.value == "uv") {
-                renderPassEncoder.setPipeline(this.uvRenderPipeline);
-                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
-                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-            }
-            else if (renderingModeSelection.value == "colors") {
-                renderPassEncoder.setPipeline(this.colorRenderPipeline);
-                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
-                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-            }
-            else if (renderingModeSelection.value == "pointCloudSolidColor") {
-                renderPassEncoder.setPipeline(this.pointCloudSolidColorRenderPipeline);
-                renderPassEncoder.draw(nbVertices, 1, 0, 0);
-            }
-            else if (renderingModeSelection.value == "pointCloudNormals") {
-                renderPassEncoder.setPipeline(this.pointCloudNormalRenderPipeline);
-                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
-                renderPassEncoder.draw(nbVertices, 1, 0, 0);
-            }
-            else if (renderingModeSelection.value == "pointCloudColors") {
-                renderPassEncoder.setPipeline(this.pointCloudColorRenderPipeline);
-                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
-                renderPassEncoder.draw(nbVertices, 1, 0, 0);
-            }
-            renderPassEncoder.end();
-            const toSRGBRenderPassEncoder = commandEncoder.beginRenderPass({
-                label: "To SRGB render pass",
-                colorAttachments: [{
-                        view: this.context.getCurrentTexture().createView({
-                            label: "View"
-                        }),
-                        clearValue: {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 0.0
-                        },
-                        loadOp: "clear",
-                        storeOp: "store"
-                    }]
-            });
-            toSRGBRenderPassEncoder.setPipeline(this.toSRGBRenderPipeline);
-            toSRGBRenderPassEncoder.setBindGroup(0, this.toSRGBRenderPipelineBindGroup);
-            toSRGBRenderPassEncoder.draw(3, 1, 0, 0);
-            toSRGBRenderPassEncoder.end();
-            this.device.queue.submit([commandEncoder.finish()]);
-            window.requestAnimationFrame(this.update.bind(this));
+            this.mesh.indexCount = dataIndices.length;
+            modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No");
+            reloadModel = false;
+        }
+        const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
+        const uniformDataTime = new Float32Array([timestamp / 1000.0]);
+        const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
+        const uniformDataMouse = new Int32Array([mouseX, mouseY]);
+        this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformDataCameraViewProj.buffer, 0, 64);
+        this.device.queue.writeBuffer(this.uniformBuffer, 256, uniformDataTime.buffer, 0, 4);
+        this.device.queue.writeBuffer(this.uniformBuffer, 512, uniformDataResolution.buffer, 0, 8);
+        this.device.queue.writeBuffer(this.uniformBuffer, 768, uniformDataMouse.buffer, 0, 8);
+        const commandEncoder = this.device.createCommandEncoder({
+            label: "Command encoder"
         });
+        const renderPassEncoder = commandEncoder.beginRenderPass({
+            label: "Render pass",
+            colorAttachments: [{
+                    view: this.colorTextureView,
+                    clearValue: {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                        a: 0.0
+                    },
+                    loadOp: "clear",
+                    storeOp: "store"
+                }],
+            depthStencilAttachment: {
+                view: this.depthTextureView,
+                depthClearValue: 1.0,
+                depthLoadOp: "clear",
+                depthStoreOp: "store",
+                depthReadOnly: false
+            }
+        });
+        renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
+        renderPassEncoder.setVertexBuffer(0, this.positionVertexBuffer, 0, this.positionVertexBuffer.size);
+        if (renderingModeSelection.value == "solidColor") {
+            renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
+            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
+        }
+        else if (renderingModeSelection.value == "normals") {
+            renderPassEncoder.setPipeline(this.normalRenderPipeline);
+            renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
+        }
+        else if (renderingModeSelection.value == "uv") {
+            renderPassEncoder.setPipeline(this.uvRenderPipeline);
+            renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
+        }
+        else if (renderingModeSelection.value == "colors") {
+            renderPassEncoder.setPipeline(this.colorRenderPipeline);
+            renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
+        }
+        else if (renderingModeSelection.value == "pointCloudSolidColor") {
+            renderPassEncoder.setPipeline(this.pointCloudSolidColorRenderPipeline);
+            renderPassEncoder.draw(nbVertices, 1, 0, 0);
+        }
+        else if (renderingModeSelection.value == "pointCloudNormals") {
+            renderPassEncoder.setPipeline(this.pointCloudNormalRenderPipeline);
+            renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            renderPassEncoder.draw(nbVertices, 1, 0, 0);
+        }
+        else if (renderingModeSelection.value == "pointCloudColors") {
+            renderPassEncoder.setPipeline(this.pointCloudColorRenderPipeline);
+            renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+            renderPassEncoder.draw(nbVertices, 1, 0, 0);
+        }
+        renderPassEncoder.end();
+        const toSRGBRenderPassEncoder = commandEncoder.beginRenderPass({
+            label: "To SRGB render pass",
+            colorAttachments: [{
+                    view: this.context.getCurrentTexture().createView({
+                        label: "View"
+                    }),
+                    clearValue: {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                        a: 0.0
+                    },
+                    loadOp: "clear",
+                    storeOp: "store"
+                }]
+        });
+        toSRGBRenderPassEncoder.setPipeline(this.toSRGBRenderPipeline);
+        toSRGBRenderPassEncoder.setBindGroup(0, this.toSRGBRenderPipelineBindGroup);
+        toSRGBRenderPassEncoder.draw(3, 1, 0, 0);
+        toSRGBRenderPassEncoder.end();
+        this.device.queue.submit([commandEncoder.finish()]);
+        window.requestAnimationFrame(this.update.bind(this));
     }
 }
 function run() {
