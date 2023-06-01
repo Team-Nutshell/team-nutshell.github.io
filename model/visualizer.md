@@ -28,8 +28,7 @@
 		</select>
 	</div>
 </div>
-<br>
-<div>
+<div style="margin-top: 10px;">
 	<button id="webgpuResetCamera">Reset camera</button> <button id="webgpuCalculateTangents">Calculate tangents (Lengyel, 2001)</button>
 </div>
 <p id="webgpuFileCheck"></p>
