@@ -15,7 +15,9 @@
 			<option value="solidColor">Solid Color</option>
 			<option value="normals">Normals</option>
 			<option value="uv">UV</option>
-			<option value="vertices">Vertices</option>
+			<option value="pointCloudSolidColor">Point Cloud Solid Color</option>
+			<option value="pointCloudNormals">Point Cloud Normals</option>
+			<option value="pointCloudColors">Point Cloud Colors</option>
 		</select>
 	</div>
 </div>

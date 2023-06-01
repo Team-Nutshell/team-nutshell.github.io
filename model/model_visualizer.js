@@ -10,13 +10,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const vertexShader = `
 @group(0) @binding(0) var<uniform> cameraViewProj: mat4x4f;
 
-struct SolidColorVertexShaderOutput {
+struct PositionVertexShaderOutput {
 	@builtin(position) pos: vec4f
 }
 
 @vertex
-fn solidColorMain(@location(0) position: vec3f) -> SolidColorVertexShaderOutput {
-	var output: SolidColorVertexShaderOutput;
+fn positionMain(@location(0) position: vec3f) -> PositionVertexShaderOutput {
+	var output: PositionVertexShaderOutput;
 	output.pos = cameraViewProj * vec4f(position, 1.0);
 
 	return output;
@@ -52,14 +52,17 @@ fn uvMain(@location(0) position: vec3f,
 	return output;
 }
 
-struct vertexVertexShaderOutput {
-	@builtin(position) pos: vec4f
+struct ColorVertexShaderOutput {
+	@builtin(position) pos: vec4f,
+	@location(0) color: vec3f
 }
 
 @vertex
-fn vertexMain(@location(0) position: vec3f) -> vertexVertexShaderOutput {
-	var output: vertexVertexShaderOutput;
+fn colorMain(@location(0) position: vec3f,
+			@location(1) color: vec3f) -> ColorVertexShaderOutput {
+	var output: ColorVertexShaderOutput;
 	output.pos = cameraViewProj * vec4f(position, 1.0);
+	output.color = color;
 
 	return output;
 }
@@ -82,6 +85,11 @@ fn normalMain(@location(0) normal: vec3f) -> @location(0) vec4f {
 @fragment
 fn uvMain(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(uv, 0.0, 1.0);
+}
+
+@fragment
+fn colorMain(@location(0) color: vec3f) -> @location(0) vec4f {
+	return vec4f(color, 1.0);
 }
 `;
 const toSRGBVertexShader = `
@@ -127,9 +135,11 @@ var reloadModel = false;
 var dataVertexPositions;
 var dataVertexNormals;
 var dataVertexUV;
+var dataVertexColors;
 var dataIndices;
 var providesNormals = false;
 var providesUV = false;
+var providesColors = false;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
 var nbFrames = 0;
@@ -418,15 +428,19 @@ function loadObj(reader) {
     else {
         dataVertexUV = new Float32Array(nbVertices * 2);
     }
+    dataVertexColors = new Float32Array(nbVertices * 3);
     dataIndices = new Uint32Array(indices);
 }
 function loadPcd(reader) {
     const lines = reader.result.toString().split("\n");
     var verticesPositions = [];
     var verticesNormals = [];
+    var verticesColors = [];
     var positionStart = 0;
     var normalStart = -1;
+    var colorIndex = -1;
     for (let line of lines) {
+        line = line.trim();
         if (line.length == 0) {
             continue;
         }
@@ -452,12 +466,20 @@ function loadPcd(reader) {
                     normalStart = i - 1;
                     providesNormals = true;
                 }
+                else if (tokens[i] == "rgb") {
+                    colorIndex = i - 1;
+                    providesColors = true;
+                }
             }
+            continue;
         }
         if (tokens[0] == "SIZE") {
             continue;
         }
         if (tokens[0] == "TYPE") {
+            continue;
+        }
+        if (tokens[0] == "COUNT") {
             continue;
         }
         if (tokens[0] == "WIDTH") {
@@ -480,8 +502,14 @@ function loadPcd(reader) {
         verticesPositions.push(parseFloat(tokens[positionStart + 2]));
         if (normalStart != -1) {
             verticesNormals.push(parseFloat(tokens[normalStart]));
-            verticesNormals.push(parseFloat(tokens[normalStart + 1]));
+            verticesNormals.push(-parseFloat(tokens[normalStart + 1]));
             verticesNormals.push(parseFloat(tokens[normalStart + 2]));
+        }
+        if (colorIndex != -1) {
+            const color = parseFloat(tokens[colorIndex]);
+            verticesColors.push(((color & 0x00FF0000) >> 16) / 255.0);
+            verticesColors.push(((color & 0x0000FF00) >> 8) / 255.0);
+            verticesColors.push((color & 0x000000FF) / 255.0);
         }
     }
     nbVertices = verticesPositions.length / 3;
@@ -494,11 +522,18 @@ function loadPcd(reader) {
         dataVertexNormals = new Float32Array(nbVertices * 3);
     }
     dataVertexUV = new Float32Array(nbVertices * 2);
+    if (providesColors) {
+        dataVertexColors = new Float32Array(verticesColors);
+    }
+    else {
+        dataVertexColors = new Float32Array(nbVertices * 3);
+    }
     dataIndices = new Uint32Array(0);
 }
 fileReader.addEventListener("loadend", (event) => {
     providesNormals = false;
     providesUV = false;
+    providesColors = false;
     const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.indexOf("."));
     if (extension == ".obj") {
         loadObj(fileReader);
@@ -601,6 +636,10 @@ class Renderer {
                 size: 268435456,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
+            this.colorVertexBuffer = this.device.createBuffer({
+                size: 268435456,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+            });
             this.indexBuffer = this.device.createBuffer({
                 size: 268435456,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
@@ -620,11 +659,17 @@ class Renderer {
                 0.5, 0.5,
                 0.5, 0.5
             ]);
+            dataVertexColors = new Float32Array([
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0
+            ]);
             dataIndices = new Uint32Array([0, 1, 2]);
             nbVertices = 3;
             nbTriangles = 1;
             providesNormals = true;
             providesUV = true;
+            providesColors = true;
             reloadModel = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
@@ -711,7 +756,7 @@ class Renderer {
                 }),
                 vertex: {
                     module: vertexShaderModule,
-                    entryPoint: "solidColorMain",
+                    entryPoint: "positionMain",
                     buffers: [{
                             arrayStride: 12,
                             stepMode: "vertex",
@@ -836,17 +881,65 @@ class Renderer {
                         }]
                 }
             });
-            this.vertexRenderPipeline = this.device.createRenderPipeline({
-                label: "Vertex render pipeline",
+            this.colorRenderPipeline = this.device.createRenderPipeline({
+                label: "Color render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Vertex render pipeline layout",
+                    label: "Color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
                 }),
                 vertex: {
                     module: vertexShaderModule,
-                    entryPoint: "vertexMain",
+                    entryPoint: "colorMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "colorMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointCloudSolidColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Point cloud solid color render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point cloud solid color render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "positionMain",
                     buffers: [{
                             arrayStride: 12,
                             stepMode: "vertex",
@@ -870,6 +963,102 @@ class Renderer {
                 fragment: {
                     module: fragmentShaderModule,
                     entryPoint: "solidColorMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointCloudNormalRenderPipeline = this.device.createRenderPipeline({
+                label: "Point cloud normal render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point cloud normal render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "normalMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "normalMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointCloudColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Point cloud color render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point cloud color render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "colorMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "colorMain",
                     targets: [{
                             format: "rgba16float"
                         }]
@@ -1005,11 +1194,12 @@ class Renderer {
                 this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
                 this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
                 this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
+                this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.length * 4);
                 if (dataIndices.length > 0) {
                     this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
                 }
                 this.mesh.indexCount = dataIndices.length;
-                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No");
+                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No");
                 reloadModel = false;
             }
             const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
@@ -1063,8 +1253,24 @@ class Renderer {
                 renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
                 renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
             }
-            else if (renderingModeSelection.value == "vertices") {
-                renderPassEncoder.setPipeline(this.vertexRenderPipeline);
+            else if (renderingModeSelection.value == "colors") {
+                renderPassEncoder.setPipeline(this.colorRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+                renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
+                renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
+            }
+            else if (renderingModeSelection.value == "pointCloudSolidColor") {
+                renderPassEncoder.setPipeline(this.pointCloudSolidColorRenderPipeline);
+                renderPassEncoder.draw(nbVertices, 1, 0, 0);
+            }
+            else if (renderingModeSelection.value == "pointCloudNormals") {
+                renderPassEncoder.setPipeline(this.pointCloudNormalRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+                renderPassEncoder.draw(nbVertices, 1, 0, 0);
+            }
+            else if (renderingModeSelection.value == "pointCloudColors") {
+                renderPassEncoder.setPipeline(this.pointCloudColorRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
                 renderPassEncoder.draw(nbVertices, 1, 0, 0);
             }
             renderPassEncoder.end();
