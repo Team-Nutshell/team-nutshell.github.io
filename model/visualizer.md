@@ -9,16 +9,21 @@
 </center>
 <div>
 	<input id="webgpuFile" type="file" accept=".obj,.pcd">
-	<div style="float: right">
-		Rendering mode:
+	<div style="float: right;">
+		<div style="float: left; margin-right: 10px;">
+			<b>Primitive:</b>
+			<input type="radio" name="webgpuPrimitive" id="triangles" value="triangles" checked>
+			<label for="triangles">Triangles</label>
+			<input type="radio" name="webgpuPrimitive" id="points" value="points">
+			<label for="points">Points</label>
+		</div>
+		<b>Rendering mode:</b>
 		<select name="Rendering mode" id="webgpuRenderingMode">
 			<option value="solidColor">Solid Color</option>
 			<option value="normals">Normals</option>
 			<option value="uv">UV</option>
 			<option value="colors">Vertex Colors</option>
-			<option value="pointCloudSolidColor">Point Cloud Solid Color</option>
-			<option value="pointCloudNormals">Point Cloud Normals</option>
-			<option value="pointCloudColors">Point Cloud Colors</option>
+			<option value="simpleShading">Simple Shading</option>
 		</select>
 	</div>
 </div>
