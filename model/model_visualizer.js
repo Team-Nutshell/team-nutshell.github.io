@@ -91,6 +91,13 @@ fn uvMain(@location(0) uv: vec2f) -> @location(0) vec4f {
 fn colorMain(@location(0) color: vec3f) -> @location(0) vec4f {
 	return vec4f(color, 1.0);
 }
+
+@fragment
+fn simpleShadingMain(@location(0) normal: vec3f) -> @location(0) vec4f {
+	let lightDirection: vec3f = vec3f(1.0, 1.0, -1.0);
+
+	return vec4(dot(lightDirection, normal), 0.0, 0.0, 1.0);
+}
 `;
 const toSRGBVertexShader = `
 struct VertexShaderOutput {
@@ -316,15 +323,17 @@ var modelInformation = document.querySelector("#webgpuModelInformation");
 var nbVertices = 0;
 var nbTriangles = 0;
 fileSelector.addEventListener("change", (event) => {
-    const file = fileSelector.files[0];
-    const extension = file.name.substring(file.name.indexOf("."));
-    if (extension != ".obj" && extension != ".pcd") {
-        fileCheck.textContent = "\"" + extension + "\" format is unsupported.";
-        return;
-    }
-    else {
-        fileCheck.textContent = "";
-        fileReader.readAsText(file);
+    if (fileSelector.files[0]) {
+        const file = fileSelector.files[0];
+        const extension = file.name.substring(file.name.indexOf("."));
+        if (extension != ".obj" && extension != ".pcd") {
+            fileCheck.textContent = "\"" + extension + "\" format is unsupported.";
+            return;
+        }
+        else {
+            fileCheck.textContent = "";
+            fileReader.readAsText(file);
+        }
     }
 }, false);
 function loadObj(reader) {
@@ -746,10 +755,10 @@ class Renderer {
                         }
                     }]
             });
-            this.solidColorRenderPipeline = this.device.createRenderPipeline({
-                label: "Solid color render pipeline",
+            this.triangleSolidColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle solid color render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Solid color render pipeline layout",
+                    label: "Triangle solid color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -785,10 +794,10 @@ class Renderer {
                         }]
                 }
             });
-            this.normalRenderPipeline = this.device.createRenderPipeline({
-                label: "Normal render pipeline",
+            this.triangleNormalRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle normal render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Normal render pipeline layout",
+                    label: "Triangle normal render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -833,10 +842,10 @@ class Renderer {
                         }]
                 }
             });
-            this.uvRenderPipeline = this.device.createRenderPipeline({
-                label: "UV render pipeline",
+            this.triangleUVRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle UV render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "UV render pipeline layout",
+                    label: "Triangle UV render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -881,10 +890,10 @@ class Renderer {
                         }]
                 }
             });
-            this.colorRenderPipeline = this.device.createRenderPipeline({
-                label: "Color render pipeline",
+            this.triangleColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle color render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Color render pipeline layout",
+                    label: "Triangle color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -929,10 +938,58 @@ class Renderer {
                         }]
                 }
             });
-            this.pointCloudSolidColorRenderPipeline = this.device.createRenderPipeline({
-                label: "Point cloud solid color render pipeline",
+            this.triangleSimpleShadingRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle simple shading render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Point cloud solid color render pipeline layout",
+                    label: "Triangle simple shading render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "normalMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "simpleShadingMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointSolidColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Point solid color render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point solid color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -968,10 +1025,10 @@ class Renderer {
                         }]
                 }
             });
-            this.pointCloudNormalRenderPipeline = this.device.createRenderPipeline({
-                label: "Point cloud normal render pipeline",
+            this.pointNormalRenderPipeline = this.device.createRenderPipeline({
+                label: "Point normal render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Point cloud normal render pipeline layout",
+                    label: "Point normal render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -1016,10 +1073,58 @@ class Renderer {
                         }]
                 }
             });
-            this.pointCloudColorRenderPipeline = this.device.createRenderPipeline({
-                label: "Point cloud color render pipeline",
+            this.pointUVRenderPipeline = this.device.createRenderPipeline({
+                label: "Point UV render pipeline",
                 layout: this.device.createPipelineLayout({
-                    label: "Point cloud color render pipeline layout",
+                    label: "Point UV render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "uvMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 8,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x2",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "uvMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointColorRenderPipeline = this.device.createRenderPipeline({
+                label: "Point color render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point color render pipeline layout",
                     bindGroupLayouts: [
                         this.bindGroupLayout
                     ]
@@ -1059,6 +1164,54 @@ class Renderer {
                 fragment: {
                     module: fragmentShaderModule,
                     entryPoint: "colorMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.pointSimpleShadingRenderPipeline = this.device.createRenderPipeline({
+                label: "Point simple shading render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point simple shading render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "normalMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "simpleShadingMain",
                     targets: [{
                             format: "rgba16float"
                         }]
@@ -1235,41 +1388,50 @@ class Renderer {
         });
         renderPassEncoder.setBindGroup(0, this.renderPipelineBindGroup);
         renderPassEncoder.setVertexBuffer(0, this.positionVertexBuffer, 0, this.positionVertexBuffer.size);
-        if (renderingModeSelection.value == "solidColor") {
-            renderPassEncoder.setPipeline(this.solidColorRenderPipeline);
+        const primitiveSelection = document.querySelector("input[name=webgpuPrimitive]:checked");
+        if (primitiveSelection.value == "triangles") {
+            if (renderingModeSelection.value == "solidColor") {
+                renderPassEncoder.setPipeline(this.triangleSolidColorRenderPipeline);
+            }
+            else if (renderingModeSelection.value == "normals") {
+                renderPassEncoder.setPipeline(this.triangleNormalRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "uv") {
+                renderPassEncoder.setPipeline(this.triangleUVRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "colors") {
+                renderPassEncoder.setPipeline(this.triangleColorRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "simpleShading") {
+                renderPassEncoder.setPipeline(this.triangleSimpleShadingRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            }
             renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
             renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
         }
-        else if (renderingModeSelection.value == "normals") {
-            renderPassEncoder.setPipeline(this.normalRenderPipeline);
-            renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
-            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-        }
-        else if (renderingModeSelection.value == "uv") {
-            renderPassEncoder.setPipeline(this.uvRenderPipeline);
-            renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
-            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-        }
-        else if (renderingModeSelection.value == "colors") {
-            renderPassEncoder.setPipeline(this.colorRenderPipeline);
-            renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
-            renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
-            renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
-        }
-        else if (renderingModeSelection.value == "pointCloudSolidColor") {
-            renderPassEncoder.setPipeline(this.pointCloudSolidColorRenderPipeline);
-            renderPassEncoder.draw(nbVertices, 1, 0, 0);
-        }
-        else if (renderingModeSelection.value == "pointCloudNormals") {
-            renderPassEncoder.setPipeline(this.pointCloudNormalRenderPipeline);
-            renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
-            renderPassEncoder.draw(nbVertices, 1, 0, 0);
-        }
-        else if (renderingModeSelection.value == "pointCloudColors") {
-            renderPassEncoder.setPipeline(this.pointCloudColorRenderPipeline);
-            renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+        else if (primitiveSelection.value == "points") {
+            if (renderingModeSelection.value == "solidColor") {
+                renderPassEncoder.setPipeline(this.pointSolidColorRenderPipeline);
+            }
+            else if (renderingModeSelection.value == "normals") {
+                renderPassEncoder.setPipeline(this.pointNormalRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "uv") {
+                renderPassEncoder.setPipeline(this.pointUVRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "colors") {
+                renderPassEncoder.setPipeline(this.pointColorRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "simpleShading") {
+                renderPassEncoder.setPipeline(this.pointSimpleShadingRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            }
             renderPassEncoder.draw(nbVertices, 1, 0, 0);
         }
         renderPassEncoder.end();
