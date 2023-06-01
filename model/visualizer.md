@@ -23,9 +23,14 @@
 			<option value="normals">Normals</option>
 			<option value="uv">UV</option>
 			<option value="colors">Vertex Colors</option>
+			<option value="tangents">Tangents</option>
 			<option value="simpleShading">Simple Shading</option>
 		</select>
 	</div>
+</div>
+<br>
+<div>
+	<button id="webgpuResetCamera">Reset camera</button> <button id="webgpuCalculateTangents">Calculate tangents (Lengyel, 2001)</button>
 </div>
 <p id="webgpuFileCheck"></p>
 
