@@ -671,9 +671,19 @@ class Renderer {
             if (!this.adapter) {
                 throw Error("Could not request WebGPU adapter.");
             }
-            this.device = yield this.adapter.requestDevice({
-                label: "Device"
-            });
+            if (this.adapter.limits.maxBufferSize) {
+                this.device = yield this.adapter.requestDevice({
+                    label: "Device",
+                    requiredLimits: {
+                        "maxBufferSize": this.adapter.limits.maxBufferSize
+                    }
+                });
+            }
+            else {
+                this.device = yield this.adapter.requestDevice({
+                    label: "Device"
+                });
+            }
             if (!this.device) {
                 throw Error("Could not request WebGPU device.");
             }
@@ -726,27 +736,27 @@ class Renderer {
                 label: "Depth texture view"
             });
             this.positionVertexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.normalVertexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.uvVertexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.colorVertexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.tangentVertexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.indexBuffer = this.device.createBuffer({
-                size: 268435456,
+                size: 67108864,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
             });
             dataVertexPositions = new Float32Array([
@@ -1537,13 +1547,55 @@ class Renderer {
             cameraPosition[1] -= cameraSpeed * deltaTime;
         }
         if (reloadModel) {
-            this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
-            this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
-            this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
-            this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.length * 4);
-            this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.length * 4);
+            if (dataVertexPositions.buffer.byteLength > this.positionVertexBuffer.size) {
+                this.positionVertexBuffer.destroy();
+                this.positionVertexBuffer = this.device.createBuffer({
+                    size: dataVertexPositions.buffer.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+            }
+            this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.byteLength);
+            if (dataVertexNormals.buffer.byteLength > this.normalVertexBuffer.size) {
+                this.normalVertexBuffer.destroy();
+                this.normalVertexBuffer = this.device.createBuffer({
+                    size: dataVertexNormals.buffer.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+            }
+            this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.byteLength);
+            if (dataVertexUV.buffer.byteLength > this.uvVertexBuffer.size) {
+                this.uvVertexBuffer.destroy();
+                this.uvVertexBuffer = this.device.createBuffer({
+                    size: dataVertexUV.buffer.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+            }
+            this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.byteLength);
+            if (dataVertexColors.buffer.byteLength > this.colorVertexBuffer.size) {
+                this.colorVertexBuffer.destroy();
+                this.colorVertexBuffer = this.device.createBuffer({
+                    size: dataVertexColors.buffer.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+            }
+            this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.byteLength);
+            if (dataVertexTangents.buffer.byteLength > this.tangentVertexBuffer.size) {
+                this.tangentVertexBuffer.destroy();
+                this.tangentVertexBuffer = this.device.createBuffer({
+                    size: dataVertexTangents.buffer.byteLength,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                });
+            }
+            this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.byteLength);
             if (dataIndices.length > 0) {
-                this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
+                if (dataIndices.buffer.byteLength > this.indexBuffer.size) {
+                    this.indexBuffer.destroy();
+                    this.indexBuffer = this.device.createBuffer({
+                        size: dataIndices.buffer.byteLength,
+                        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+                    });
+                }
+                this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.byteLength);
             }
             this.mesh.indexCount = dataIndices.length;
             modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: " + (providesTangents ? "Yes" : "No");
@@ -1552,7 +1604,14 @@ class Renderer {
         if (calculateModelTangents) {
             if (providesNormals && providesUV && dataIndices.length > 0) {
                 calculateTangents();
-                this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.length * 4);
+                if (dataVertexTangents.buffer.byteLength > this.tangentVertexBuffer.size) {
+                    this.tangentVertexBuffer.destroy();
+                    this.tangentVertexBuffer = this.device.createBuffer({
+                        size: dataVertexTangents.buffer.byteLength,
+                        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+                    });
+                }
+                this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.byteLength);
                 modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: Calculated (Lengyel, 2001)";
             }
             else {
