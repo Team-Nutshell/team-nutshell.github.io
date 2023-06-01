@@ -66,6 +66,21 @@ fn colorMain(@location(0) position: vec3f,
 
 	return output;
 }
+
+struct TangentVertexShaderOutput {
+	@builtin(position) pos: vec4f,
+	@location(0) tangent: vec4f
+}
+
+@vertex
+fn tangentMain(@location(0) position: vec3f,
+			@location(1) tangent: vec4f) -> TangentVertexShaderOutput {
+	var output: TangentVertexShaderOutput;
+	output.pos = cameraViewProj * vec4f(position, 1.0);
+	output.tangent = tangent;
+
+	return output;
+}
 `;
 const fragmentShader = `
 @group(0) @binding(1) var<uniform> time: f32;
@@ -93,10 +108,15 @@ fn colorMain(@location(0) color: vec3f) -> @location(0) vec4f {
 }
 
 @fragment
+fn tangentMain(@location(0) tangent: vec4f) -> @location(0) vec4f {
+	return vec4f(tangent.xyz, 1.0);
+}
+
+@fragment
 fn simpleShadingMain(@location(0) normal: vec3f) -> @location(0) vec4f {
 	let lightDirection: vec3f = vec3f(1.0, 1.0, -1.0);
 
-	return vec4(dot(lightDirection, normal), 0.0, 0.0, 1.0);
+	return vec4(vec3f(dot(lightDirection, normal)), 1.0);
 }
 `;
 const toSRGBVertexShader = `
@@ -123,6 +143,14 @@ fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(pow(textureSample(colorTexture, colorSampler, vec2f(1.0 - uv.x, 1.0 - uv.y)).xyz, vec3f(1.0/2.2)), 1.0);
 }
 `;
+const toDeg = 180.0 / 3.1415926535897932384626433832795;
+const toRad = 3.1415926535897932384626433832795 / 180.0;
+var cameraPosition = new Float32Array([0.0, 0.0, -2.0]);
+var cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
+var cameraYaw = Math.atan2(cameraDirection[2], cameraDirection[0]) * toDeg;
+var cameraPitch = -Math.asin(cameraDirection[1]) * toDeg;
+const cameraSpeed = 0.005;
+const cameraSensitivity = 0.24;
 var inCanvas = true;
 var wPressed = false;
 var aPressed = false;
@@ -136,17 +164,19 @@ var spacePressed = false;
 var shiftPressed = false;
 var mouseX;
 var mouseY;
-const toDeg = 180.0 / 3.1415926535897932384626433832795;
-const toRad = 3.1415926535897932384626433832795 / 180.0;
 var reloadModel = false;
+var calculateModelTangents = false;
 var dataVertexPositions;
 var dataVertexNormals;
 var dataVertexUV;
 var dataVertexColors;
+var dataVertexTangents;
+Float32Array;
 var dataIndices;
 var providesNormals = false;
 var providesUV = false;
 var providesColors = false;
+var providesTangents = false;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
 var nbFrames = 0;
@@ -243,6 +273,15 @@ document.addEventListener("click", (event) => {
             inCanvas = true;
         }
         else {
+            if (event.target == document.querySelector("#webgpuResetCamera")) {
+                cameraPosition = new Float32Array([0.0, 0.0, -2.0]);
+                cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
+                cameraYaw = Math.atan2(cameraDirection[2], cameraDirection[0]) * toDeg;
+                cameraPitch = -Math.asin(cameraDirection[1]) * toDeg;
+            }
+            else if (event.target == document.querySelector("#webgpuCalculateTangents")) {
+                calculateModelTangents = true;
+            }
             inCanvas = false;
             wPressed = false;
             aPressed = false;
@@ -257,6 +296,62 @@ document.addEventListener("click", (event) => {
         }
     }
 }, false);
+function calculateTangents() {
+    dataVertexTangents = new Float32Array(((dataVertexPositions.length) / 3) * 4);
+    var tan1 = new Float32Array(dataVertexPositions.length);
+    var tan2 = new Float32Array(dataVertexPositions.length);
+    for (let i = 0; i < dataIndices.length; i += 3) {
+        const pos0 = new Float32Array([dataVertexPositions[dataIndices[i] * 3], dataVertexPositions[dataIndices[i] * 3 + 1], dataVertexPositions[dataIndices[i] * 3 + 2]]);
+        const pos1 = new Float32Array([dataVertexPositions[dataIndices[i + 1] * 3], dataVertexPositions[dataIndices[i + 1] * 3 + 1], dataVertexPositions[dataIndices[i + 1] * 3 + 2]]);
+        const pos2 = new Float32Array([dataVertexPositions[dataIndices[i + 2] * 3], dataVertexPositions[dataIndices[i + 2] * 3 + 1], dataVertexPositions[dataIndices[i + 2] * 3 + 2]]);
+        const uv0 = new Float32Array([dataVertexUV[dataIndices[i] * 2], dataVertexUV[dataIndices[i] * 2 + 1]]);
+        const uv1 = new Float32Array([dataVertexUV[dataIndices[i + 1] * 2], dataVertexUV[dataIndices[i + 1] * 2 + 1]]);
+        const uv2 = new Float32Array([dataVertexUV[dataIndices[i + 2] * 2], dataVertexUV[dataIndices[i + 2] * 2 + 1]]);
+        const dPos1 = pos1.map((val, idx) => val - pos0[idx]);
+        const dPos2 = pos2.map((val, idx) => val - pos0[idx]);
+        const dUV1 = uv1.map((val, idx) => val - uv0[idx]);
+        const dUV2 = uv2.map((val, idx) => val - uv0[idx]);
+        const r = 1.0 / (dUV1[0] * dUV2[1] - dUV1[1] * dUV2[0]);
+        const uDir = new Float32Array([((dPos1[0] * dUV2[1]) - (dPos2[0] * dUV1[1])) * r,
+            ((dPos1[1] * dUV2[1]) - (dPos2[1] * dUV1[1])) * r,
+            ((dPos1[2] * dUV2[1]) - (dPos2[2] * dUV1[1])) * r]);
+        const vDir = new Float32Array([((dPos2[0] * dUV1[0]) - (dPos1[0] * dUV2[0])) * r,
+            ((dPos2[1] * dUV1[0]) - (dPos1[1] * dUV2[0])) * r,
+            ((dPos2[2] * dUV1[0]) - (dPos1[2] * dUV2[0])) * r]);
+        tan1[dataIndices[i] * 3] += uDir[0];
+        tan1[dataIndices[i] * 3 + 1] += uDir[1];
+        tan1[dataIndices[i] * 3 + 2] += uDir[2];
+        tan1[dataIndices[i + 1] * 3] += uDir[0];
+        tan1[dataIndices[i + 1] * 3 + 1] += uDir[1];
+        tan1[dataIndices[i + 1] * 3 + 2] += uDir[2];
+        tan1[dataIndices[i + 2] * 3] += uDir[0];
+        tan1[dataIndices[i + 2] * 3 + 1] += uDir[1];
+        tan1[dataIndices[i + 2] * 3 + 2] += uDir[2];
+        tan2[dataIndices[i] * 3] += vDir[0];
+        tan2[dataIndices[i] * 3 + 1] += vDir[1];
+        tan2[dataIndices[i] * 3 + 2] += vDir[2];
+        tan2[dataIndices[i + 1] * 3] += vDir[0];
+        tan2[dataIndices[i + 1] * 3 + 1] += vDir[1];
+        tan2[dataIndices[i + 1] * 3 + 2] += vDir[2];
+        tan2[dataIndices[i + 2] * 3] += vDir[0];
+        tan2[dataIndices[i + 2] * 3 + 1] += vDir[1];
+        tan2[dataIndices[i + 2] * 3 + 2] += vDir[2];
+    }
+    var tangentIndex = 0;
+    for (let i = 0; i < dataVertexPositions.length; i += 3) {
+        const n = new Float32Array([dataVertexNormals[i], dataVertexNormals[i + 1], dataVertexNormals[i + 2]]);
+        const t = new Float32Array([tan1[i], tan1[i + 1], tan1[i + 2]]);
+        const nDott = dot(n, t);
+        const tmp = normalize(new Float32Array([t[0] - (n[0] * nDott),
+            t[1] - (n[1] * nDott),
+            t[2] - (n[2] * nDott)]));
+        dataVertexTangents[tangentIndex] = tmp[0];
+        dataVertexTangents[tangentIndex + 1] = tmp[1];
+        dataVertexTangents[tangentIndex + 2] = tmp[2];
+        dataVertexTangents[tangentIndex + 3] = (dot(cross(n, t), new Float32Array([tan2[i], tan2[i + 1], tan2[i + 2]]))) < 0.0 ? -1.0 : 1.0;
+        tangentIndex += 4;
+    }
+}
 function normalize(vector) {
     const length = Math.sqrt(vector.map(x => x * x).reduce((a, b) => a + b));
     return vector.map(x => x / length);
@@ -438,6 +533,7 @@ function loadObj(reader) {
         dataVertexUV = new Float32Array(nbVertices * 2);
     }
     dataVertexColors = new Float32Array(nbVertices * 3);
+    dataVertexTangents = new Float32Array(nbVertices * 4);
     dataIndices = new Uint32Array(indices);
 }
 function loadPcd(reader) {
@@ -537,12 +633,14 @@ function loadPcd(reader) {
     else {
         dataVertexColors = new Float32Array(nbVertices * 3);
     }
+    dataVertexTangents = new Float32Array(nbVertices * 4);
     dataIndices = new Uint32Array(0);
 }
 fileReader.addEventListener("loadend", (event) => {
     providesNormals = false;
     providesUV = false;
     providesColors = false;
+    providesTangents = false;
     const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.indexOf("."));
     if (extension == ".obj") {
         loadObj(fileReader);
@@ -561,12 +659,6 @@ class Renderer {
             baseVertex: 0,
             firstInstance: 0
         };
-        this.cameraPosition = new Float32Array([0.0, 0.0, -2.0]);
-        this.cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
-        this.cameraYaw = Math.atan2(this.cameraDirection[2], this.cameraDirection[0]) * toDeg;
-        this.cameraPitch = -Math.asin(this.cameraDirection[1]) * toDeg;
-        this.cameraSpeed = 0.005;
-        this.cameraSensitivity = 0.24;
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -649,6 +741,10 @@ class Renderer {
                 size: 268435456,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
+            this.tangentVertexBuffer = this.device.createBuffer({
+                size: 268435456,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+            });
             this.indexBuffer = this.device.createBuffer({
                 size: 268435456,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
@@ -673,12 +769,14 @@ class Renderer {
                 0.0, 1.0, 0.0,
                 0.0, 0.0, 1.0
             ]);
+            dataVertexTangents = new Float32Array(12);
             dataIndices = new Uint32Array([0, 1, 2]);
             nbVertices = 3;
             nbTriangles = 1;
             providesNormals = true;
             providesUV = true;
             providesColors = true;
+            providesTangents = false;
             reloadModel = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
@@ -938,6 +1036,54 @@ class Renderer {
                         }]
                 }
             });
+            this.triangleTangentRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle tangent render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Triangle tangent render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "tangentMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 16,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x4",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "tangentMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
             this.triangleSimpleShadingRenderPipeline = this.device.createRenderPipeline({
                 label: "Triangle simple shading render pipeline",
                 layout: this.device.createPipelineLayout({
@@ -1169,6 +1315,54 @@ class Renderer {
                         }]
                 }
             });
+            this.pointTangentRenderPipeline = this.device.createRenderPipeline({
+                label: "Point tangent render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point tangent render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "tangentMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 16,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x4",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderModule,
+                    entryPoint: "tangentMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
             this.pointSimpleShadingRenderPipeline = this.device.createRenderPipeline({
                 label: "Point simple shading render pipeline",
                 layout: this.device.createPipelineLayout({
@@ -1297,64 +1491,76 @@ class Renderer {
         var xOffset = 0.0;
         var yOffset = 0.0;
         if (upPressed) {
-            yOffset -= this.cameraSensitivity * deltaTime;
+            yOffset -= cameraSensitivity * deltaTime;
         }
         if (leftPressed) {
-            xOffset += this.cameraSensitivity * deltaTime;
+            xOffset += cameraSensitivity * deltaTime;
         }
         if (downPressed) {
-            yOffset += this.cameraSensitivity * deltaTime;
+            yOffset += cameraSensitivity * deltaTime;
         }
         if (rightPressed) {
-            xOffset -= this.cameraSensitivity * deltaTime;
+            xOffset -= cameraSensitivity * deltaTime;
         }
-        this.cameraYaw = (this.cameraYaw + xOffset) % 360.0;
-        this.cameraPitch = Math.max(-89.0, Math.min(89.0, this.cameraPitch + yOffset));
-        const yawRad = this.cameraYaw * toRad;
-        const pitchRad = this.cameraPitch * toRad;
-        this.cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
-        this.cameraDirection[1] = -Math.sin(pitchRad);
-        this.cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
-        this.cameraDirection = normalize(this.cameraDirection);
+        cameraYaw = (cameraYaw + xOffset) % 360.0;
+        cameraPitch = Math.max(-89.0, Math.min(89.0, cameraPitch + yOffset));
+        const yawRad = cameraYaw * toRad;
+        const pitchRad = cameraPitch * toRad;
+        cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
+        cameraDirection[1] = -Math.sin(pitchRad);
+        cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
+        cameraDirection = normalize(cameraDirection);
         if (wPressed) {
-            this.cameraPosition[0] += this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[1] += this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[2] += this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+            cameraPosition[0] += cameraDirection[0] * (cameraSpeed * deltaTime);
+            cameraPosition[1] += cameraDirection[1] * (cameraSpeed * deltaTime);
+            cameraPosition[2] += cameraDirection[2] * (cameraSpeed * deltaTime);
         }
         if (aPressed) {
-            const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-            this.cameraPosition[0] += t[0] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[2] += t[2] * (this.cameraSpeed * deltaTime);
+            const t = normalize(new Float32Array([-cameraDirection[2], 0.0, cameraDirection[0]]));
+            cameraPosition[0] += t[0] * (cameraSpeed * deltaTime);
+            cameraPosition[2] += t[2] * (cameraSpeed * deltaTime);
         }
         if (sPressed) {
-            this.cameraPosition[0] -= this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[1] -= this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[2] -= this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+            cameraPosition[0] -= cameraDirection[0] * (cameraSpeed * deltaTime);
+            cameraPosition[1] -= cameraDirection[1] * (cameraSpeed * deltaTime);
+            cameraPosition[2] -= cameraDirection[2] * (cameraSpeed * deltaTime);
         }
         if (dPressed) {
-            const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-            this.cameraPosition[0] -= t[0] * (this.cameraSpeed * deltaTime);
-            this.cameraPosition[2] -= t[2] * (this.cameraSpeed * deltaTime);
+            const t = normalize(new Float32Array([-cameraDirection[2], 0.0, cameraDirection[0]]));
+            cameraPosition[0] -= t[0] * (cameraSpeed * deltaTime);
+            cameraPosition[2] -= t[2] * (cameraSpeed * deltaTime);
         }
         if (spacePressed) {
-            this.cameraPosition[1] += this.cameraSpeed * deltaTime;
+            cameraPosition[1] += cameraSpeed * deltaTime;
         }
         if (shiftPressed) {
-            this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
+            cameraPosition[1] -= cameraSpeed * deltaTime;
         }
         if (reloadModel) {
             this.device.queue.writeBuffer(this.positionVertexBuffer, 0, dataVertexPositions.buffer, 0, dataVertexPositions.length * 4);
             this.device.queue.writeBuffer(this.normalVertexBuffer, 0, dataVertexNormals.buffer, 0, dataVertexNormals.length * 4);
             this.device.queue.writeBuffer(this.uvVertexBuffer, 0, dataVertexUV.buffer, 0, dataVertexUV.length * 4);
             this.device.queue.writeBuffer(this.colorVertexBuffer, 0, dataVertexColors.buffer, 0, dataVertexColors.length * 4);
+            this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.length * 4);
             if (dataIndices.length > 0) {
                 this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.length * 4);
             }
             this.mesh.indexCount = dataIndices.length;
-            modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No");
+            modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: " + (providesTangents ? "Yes" : "No");
             reloadModel = false;
         }
-        const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(this.cameraPosition, this.cameraPosition.map((val, idx) => val + this.cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
+        if (calculateModelTangents) {
+            if (providesNormals && providesUV && dataIndices.length > 0) {
+                calculateTangents();
+                this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.length * 4);
+                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: Calculated (Lengyel, 2001)";
+            }
+            else {
+                fileCheck.textContent = "Tangents cannot be calculated for this model as normals, UV or indices are missing.";
+            }
+            calculateModelTangents = false;
+        }
+        const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(cameraPosition, cameraPosition.map((val, idx) => val + cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
         const uniformDataTime = new Float32Array([timestamp / 1000.0]);
         const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
         const uniformDataMouse = new Int32Array([mouseX, mouseY]);
@@ -1405,6 +1611,10 @@ class Renderer {
                 renderPassEncoder.setPipeline(this.triangleColorRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
             }
+            else if (renderingModeSelection.value == "tangents") {
+                renderPassEncoder.setPipeline(this.triangleTangentRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.tangentVertexBuffer, 0, this.tangentVertexBuffer.size);
+            }
             else if (renderingModeSelection.value == "simpleShading") {
                 renderPassEncoder.setPipeline(this.triangleSimpleShadingRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
@@ -1427,6 +1637,10 @@ class Renderer {
             else if (renderingModeSelection.value == "colors") {
                 renderPassEncoder.setPipeline(this.pointColorRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.colorVertexBuffer, 0, this.colorVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "tangents") {
+                renderPassEncoder.setPipeline(this.pointTangentRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.tangentVertexBuffer, 0, this.tangentVertexBuffer.size);
             }
             else if (renderingModeSelection.value == "simpleShading") {
                 renderPassEncoder.setPipeline(this.pointSimpleShadingRenderPipeline);
