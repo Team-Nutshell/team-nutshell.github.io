@@ -43,6 +43,14 @@ fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(pow(textureSample(colorTexture, colorSampler, vec2f(uv.x, 1.0 - uv.y)).xyz, vec3f(1.0/2.2)), 1.0);
 }
 `;
+const toDeg = 180.0 / 3.1415926535897932384626433832795;
+const toRad = 3.1415926535897932384626433832795 / 180.0;
+var cameraPosition = new Float32Array([0.0, 0.0, 0.0]);
+var cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
+var cameraYaw = Math.atan2(cameraDirection[2], cameraDirection[0]) * toDeg;
+var cameraPitch = -Math.asin(cameraDirection[1]) * toDeg;
+var cameraSpeed = 0.005;
+var cameraSensitivity = 0.24;
 var refreshFragmentShader = false;
 var inCanvas = true;
 var wPressed = false;
@@ -57,8 +65,6 @@ var spacePressed = false;
 var shiftPressed = false;
 var mouseX;
 var mouseY;
-const toDeg = 180.0 / 3.1415926535897932384626433832795;
-const toRad = 3.1415926535897932384626433832795 / 180.0;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
 var nbFrames = 0;
@@ -202,6 +208,12 @@ document.addEventListener("click", (event) => {
                     location.hash = "";
                 }
             }
+            else if (event.target == document.querySelector("#webgpuResetCamera")) {
+                cameraPosition = new Float32Array([0.0, 0.0, 0.0]);
+                cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
+                cameraYaw = Math.atan2(cameraDirection[2], cameraDirection[0]) * toDeg;
+                cameraPitch = -Math.asin(cameraDirection[1]) * toDeg;
+            }
             inCanvas = false;
             wPressed = false;
             aPressed = false;
@@ -221,14 +233,6 @@ function normalize(vector) {
     return vector.map(x => x / length);
 }
 class Renderer {
-    constructor() {
-        this.cameraPosition = new Float32Array([0.0, 0.0, 0.0]);
-        this.cameraDirection = normalize(new Float32Array([0.0, 0.0, 1.0]));
-        this.cameraYaw = Math.atan2(this.cameraDirection[2], this.cameraDirection[0]) * toDeg;
-        this.cameraPitch = -Math.asin(this.cameraDirection[1]) * toDeg;
-        this.cameraSpeed = 0.005;
-        this.cameraSensitivity = 0.24;
-    }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!navigator.gpu) {
@@ -495,57 +499,57 @@ class Renderer {
             var xOffset = 0.0;
             var yOffset = 0.0;
             if (upPressed) {
-                yOffset -= this.cameraSensitivity * deltaTime;
+                yOffset -= cameraSensitivity * deltaTime;
             }
             if (leftPressed) {
-                xOffset += this.cameraSensitivity * deltaTime;
+                xOffset += cameraSensitivity * deltaTime;
             }
             if (downPressed) {
-                yOffset += this.cameraSensitivity * deltaTime;
+                yOffset += cameraSensitivity * deltaTime;
             }
             if (rightPressed) {
-                xOffset -= this.cameraSensitivity * deltaTime;
+                xOffset -= cameraSensitivity * deltaTime;
             }
-            this.cameraYaw = (this.cameraYaw + xOffset) % 360.0;
-            this.cameraPitch = Math.max(-89.0, Math.min(89.0, this.cameraPitch + yOffset));
-            const yawRad = this.cameraYaw * toRad;
-            const pitchRad = this.cameraPitch * toRad;
-            this.cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
-            this.cameraDirection[1] = -Math.sin(pitchRad);
-            this.cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
-            this.cameraDirection = normalize(this.cameraDirection);
+            cameraYaw = (cameraYaw + xOffset) % 360.0;
+            cameraPitch = Math.max(-89.0, Math.min(89.0, cameraPitch + yOffset));
+            const yawRad = cameraYaw * toRad;
+            const pitchRad = cameraPitch * toRad;
+            cameraDirection[0] = Math.cos(pitchRad) * Math.cos(yawRad);
+            cameraDirection[1] = -Math.sin(pitchRad);
+            cameraDirection[2] = Math.cos(pitchRad) * Math.sin(yawRad);
+            cameraDirection = normalize(cameraDirection);
             if (wPressed) {
-                this.cameraPosition[0] += this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[1] += this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] += this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+                cameraPosition[0] += cameraDirection[0] * (cameraSpeed * deltaTime);
+                cameraPosition[1] += cameraDirection[1] * (cameraSpeed * deltaTime);
+                cameraPosition[2] += cameraDirection[2] * (cameraSpeed * deltaTime);
             }
             if (aPressed) {
-                const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-                this.cameraPosition[0] += t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] += t[2] * (this.cameraSpeed * deltaTime);
+                const t = normalize(new Float32Array([-cameraDirection[2], 0.0, cameraDirection[0]]));
+                cameraPosition[0] += t[0] * (cameraSpeed * deltaTime);
+                cameraPosition[2] += t[2] * (cameraSpeed * deltaTime);
             }
             if (sPressed) {
-                this.cameraPosition[0] -= this.cameraDirection[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[1] -= this.cameraDirection[1] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] -= this.cameraDirection[2] * (this.cameraSpeed * deltaTime);
+                cameraPosition[0] -= cameraDirection[0] * (cameraSpeed * deltaTime);
+                cameraPosition[1] -= cameraDirection[1] * (cameraSpeed * deltaTime);
+                cameraPosition[2] -= cameraDirection[2] * (cameraSpeed * deltaTime);
             }
             if (dPressed) {
-                const t = normalize(new Float32Array([-this.cameraDirection[2], 0.0, this.cameraDirection[0]]));
-                this.cameraPosition[0] -= t[0] * (this.cameraSpeed * deltaTime);
-                this.cameraPosition[2] -= t[2] * (this.cameraSpeed * deltaTime);
+                const t = normalize(new Float32Array([-cameraDirection[2], 0.0, cameraDirection[0]]));
+                cameraPosition[0] -= t[0] * (cameraSpeed * deltaTime);
+                cameraPosition[2] -= t[2] * (cameraSpeed * deltaTime);
             }
             if (spacePressed) {
-                this.cameraPosition[1] += this.cameraSpeed * deltaTime;
+                cameraPosition[1] += cameraSpeed * deltaTime;
             }
             if (shiftPressed) {
-                this.cameraPosition[1] -= this.cameraSpeed * deltaTime;
+                cameraPosition[1] -= cameraSpeed * deltaTime;
             }
             const uniformDataTime = new Float32Array([timestamp / 1000.0]);
             const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
             const uniformDataMouse = new Int32Array([mouseX, mouseY]);
             this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformDataTime.buffer, 0, 4);
-            this.device.queue.writeBuffer(this.uniformBuffer, 256, this.cameraPosition.buffer, 0, 12);
-            this.device.queue.writeBuffer(this.uniformBuffer, 512, this.cameraDirection.buffer, 0, 12);
+            this.device.queue.writeBuffer(this.uniformBuffer, 256, cameraPosition.buffer, 0, 12);
+            this.device.queue.writeBuffer(this.uniformBuffer, 512, cameraDirection.buffer, 0, 12);
             this.device.queue.writeBuffer(this.uniformBuffer, 768, uniformDataResolution.buffer, 0, 8);
             this.device.queue.writeBuffer(this.uniformBuffer, 1024, uniformDataMouse.buffer, 0, 8);
             const commandEncoder = this.device.createCommandEncoder({

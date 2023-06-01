@@ -11,6 +11,7 @@
 	<button id="webgpuRefreshFragmentShader" style="width: 5%; height: 275px; min-height: 100px; max-height: 750px; float: right;">Run</button>
 </div>
 <p class="highlight" id="webgpuFragmentShaderCompilationMessage" style="width: 100%; height: 115px; min-height: 100px; max-height: 350px; overflow-y: scroll; white-space: break-spaces; padding: 10px; border-style: solid; border-width: 1px; border-color: rgb(100, 15, 0); resize: vertical;"></p>
+<button id="webgpuResetCamera">Reset camera</button>
 
 Click on the canvas to control the camera.
 
