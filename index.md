@@ -16,5 +16,6 @@
 # [nml](https://github.com/Team-Nutshell/nml)
 [**nml**](https://github.com/Team-Nutshell/nml/releases) (Nutshell Mathematics Library) is a C++ mathematics library for computer graphics. [**Documentation**](https://team-nutshell.github.io/nml/).
 
-# [WebGPU Shader Editor](shader/editor.md)
-# [WebGPU Model Visualizer](model/visualizer.md)
+# Tools
+## [WebGPU Shader Editor (WGSL)](shader/editor.md)
+## [WebGPU Model Visualizer](model/visualizer.md)
