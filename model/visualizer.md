@@ -25,6 +25,7 @@
 			<option value="colors">Vertex Colors</option>
 			<option value="tangents">Tangents</option>
 			<option value="simpleShading">Simple Shading</option>
+			<option value="texture">Texture</option>
 		</select>
 	</div>
 </div>
