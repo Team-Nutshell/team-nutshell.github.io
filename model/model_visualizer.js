@@ -83,10 +83,6 @@ fn tangentMain(@location(0) position: vec3f,
 }
 `;
 const fragmentShader = `
-@group(0) @binding(1) var<uniform> time: f32;
-@group(0) @binding(2) var<uniform> resolution: vec2u;
-@group(0) @binding(3) var<uniform> mouse: vec2i;
-
 @fragment
 fn solidColorMain() -> @location(0) vec4f {
 	return vec4f(1.0, 0.0, 0.0, 1.0);
@@ -117,6 +113,15 @@ fn simpleShadingMain(@location(0) normal: vec3f) -> @location(0) vec4f {
 	let lightDirection: vec3f = vec3f(1.0, 1.0, -1.0);
 
 	return vec4(vec3f(dot(lightDirection, normal)), 1.0);
+}
+`;
+const fragmentShaderTexture = `
+@group(1) @binding(0) var modelTexture: texture_2d<f32>;
+@group(1) @binding(1) var modelSampler: sampler;
+
+@fragment
+fn textureMain(@location(0) uv: vec2f) -> @location(0) vec4f {
+	return vec4(textureSample(modelTexture, modelSampler, uv).xyz, 1.0);
 }
 `;
 const toSRGBVertexShader = `
@@ -177,6 +182,10 @@ var providesNormals = false;
 var providesUV = false;
 var providesColors = false;
 var providesTangents = false;
+var reloadTexture = false;
+var dataTexture;
+var modelTextureWidth;
+var modelTextureHeight;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
 var nbFrames = 0;
@@ -420,14 +429,22 @@ var nbTriangles = 0;
 fileSelector.addEventListener("change", (event) => {
     if (fileSelector.files[0]) {
         const file = fileSelector.files[0];
-        const extension = file.name.substring(file.name.indexOf("."));
-        if (extension != ".obj" && extension != ".pcd") {
-            fileCheck.textContent = "\"" + extension + "\" format is unsupported.";
-            return;
+        const extension = file.name.substring(file.name.lastIndexOf("."));
+        if (extension == ".obj" || extension == ".pcd") {
+            fileCheck.textContent = "";
+            providesNormals = false;
+            providesUV = false;
+            providesColors = false;
+            providesTangents = false;
+            fileReader.readAsText(file);
+        }
+        else if (extension == ".png") {
+            fileCheck.textContent = "";
+            fileReader.readAsArrayBuffer(file);
         }
         else {
-            fileCheck.textContent = "";
-            fileReader.readAsText(file);
+            fileCheck.textContent = "\"" + extension + "\" format is unsupported.";
+            return;
         }
     }
 }, false);
@@ -636,19 +653,289 @@ function loadPcd(reader) {
     dataVertexTangents = new Float32Array(nbVertices * 4);
     dataIndices = new Uint32Array(0);
 }
+function loadPng(reader) {
+    const buffer = reader.result;
+    const data = new Uint8Array(buffer);
+    var width;
+    var height;
+    var depth;
+    var colorType;
+    var compression;
+    var filter;
+    var interlace;
+    var channelPerPixel;
+    var colorSpace;
+    var textKeyword;
+    var textText;
+    var iccProfile;
+    var compressionMethod;
+    var iccCompressedProfile;
+    var gamma = 0.0;
+    var whitePointX = 0.0;
+    var whitePointY = 0.0;
+    var redX = 0.0;
+    var redY = 0.0;
+    var greenX = 0.0;
+    var greenY = 0.0;
+    var blueX = 0.0;
+    var blueY = 0.0;
+    var pixelsPerMetreWidth;
+    var pixelsPerMetreHeight;
+    var unit;
+    var lastModifiedYear;
+    var lastModifiedMonth;
+    var lastModifiedDay;
+    var lastModifiedHour;
+    var lastModifiedMinute;
+    var lastModifiedSecond;
+    var palette = [];
+    var idat;
+    var pixels = [];
+    var dataTraversal = 0;
+    if (data[dataTraversal++] != 0x89 ||
+        data[dataTraversal++] != 0x50 ||
+        data[dataTraversal++] != 0x4e ||
+        data[dataTraversal++] != 0x47 ||
+        data[dataTraversal++] != 0x0d ||
+        data[dataTraversal++] != 0x0a ||
+        data[dataTraversal++] != 0x1a ||
+        data[dataTraversal++] != 0x0a) {
+        fileCheck.textContent = "Incorrect PNG header (should be 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a).";
+    }
+    while (dataTraversal < data.byteLength) {
+        const chunkLength = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+        const chunkType = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 4));
+        dataTraversal += 4;
+        if (chunkType == "IHDR") {
+            width = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            height = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            depth = data[dataTraversal++];
+            colorType = data[dataTraversal++];
+            compression = data[dataTraversal++];
+            filter = data[dataTraversal++];
+            interlace = data[dataTraversal++];
+            if (colorType == 0) { // Grayscale
+                channelPerPixel = 1;
+            }
+            else if (colorType == 2) { // Truecolor
+                channelPerPixel = 3;
+            }
+            else if (colorType == 3) { // Palette
+                channelPerPixel = 1;
+            }
+            else if (colorType == 4) { // Grayscale + alpha
+                channelPerPixel = 2;
+            }
+            else if (colorType == 6) { // Truecolor + alpha
+                channelPerPixel = 4;
+            }
+        }
+        else if (chunkType == "sRGB") {
+            colorSpace = data[dataTraversal++];
+        }
+        else if (chunkType == "tEXt") {
+            const textTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
+            const textNullTerminator = textTmp.indexOf("\0");
+            textKeyword = textTmp.slice(0, textNullTerminator + 1);
+            dataTraversal += textNullTerminator + 1;
+            textText = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + (chunkLength - textNullTerminator - 1)));
+            dataTraversal += (chunkLength - textNullTerminator - 1);
+        }
+        else if (chunkType == "iCCP") {
+            const iccTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
+            const iccNullTerminator = iccTmp.indexOf("\0");
+            iccProfile = iccTmp.slice(0, iccNullTerminator + 1);
+            dataTraversal += iccNullTerminator + 1;
+            compressionMethod = data[dataTraversal++];
+            iccCompressedProfile = pako.inflate(data.slice(dataTraversal, dataTraversal + (chunkLength - iccNullTerminator - 2)));
+            dataTraversal += (chunkLength - iccNullTerminator - 2);
+        }
+        else if (chunkType == "gAMA") {
+            gamma = ((data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++]) / 100000.0;
+        }
+        else if (chunkType == "cHRM") {
+            whitePointX = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            whitePointY = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            redX = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            redY = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            greenX = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            greenY = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            blueX = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            blueY = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+        }
+        else if (chunkType == "pHYs") {
+            pixelsPerMetreWidth = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            pixelsPerMetreHeight = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            unit = data[dataTraversal++];
+        }
+        else if (chunkType == "tIME") {
+            lastModifiedYear = (data[dataTraversal++] << 8) + data[dataTraversal++];
+            lastModifiedMonth = data[dataTraversal++];
+            lastModifiedDay = data[dataTraversal++];
+            lastModifiedHour = data[dataTraversal++];
+            lastModifiedMinute = data[dataTraversal++];
+            lastModifiedSecond = data[dataTraversal++];
+        }
+        else if (chunkType == "PLTE") {
+            for (let i = 0; i < (chunkLength / 3); i++) {
+                palette.push([data[dataTraversal++], data[dataTraversal++], data[dataTraversal++]]);
+            }
+        }
+        else if (chunkType == "tRNS") {
+            for (let i = 0; i < chunkLength; i++) {
+                palette[i].push(data[dataTraversal++]);
+            }
+        }
+        else if (chunkType == "bKGD") {
+            if (colorType == 0 || colorType == 4) { // Grayscale or Grayscale + alpha
+                dataTraversal += 2;
+            }
+            else if (colorType == 3) { // Palette
+                dataTraversal += 1;
+            }
+            else if (colorType == 2 || colorType == 6) { // Truecolor or Truecolor + alpha
+                dataTraversal += 6;
+            }
+        }
+        else if (chunkType == "IDAT") {
+            idat = pako.inflate(data.slice(dataTraversal, dataTraversal + chunkLength));
+            dataTraversal += chunkLength;
+            const bitsPerPixel = channelPerPixel * depth;
+            const bytesPerPixel = Math.ceil(bitsPerPixel / 8);
+            const nbValues = (bitsPerPixel * width) / depth;
+            var bitMask;
+            if (depth == 1) {
+                bitMask = 0b00000001;
+            }
+            else if (depth == 2) {
+                bitMask = 0b00000011;
+            }
+            else if (depth == 4) {
+                bitMask = 0b00001111;
+            }
+            else if (depth == 8) {
+                bitMask = 0b11111111;
+            }
+            var previousDecodedScanline = new Uint8Array(nbValues);
+            for (let i = 0; i < height; i++) {
+                const filterFunction = idat[0];
+                idat = idat.slice(1);
+                const scanline = idat.slice(0, Math.ceil((nbValues * depth) / 8));
+                for (let j = 0; j < scanline.length; j++) {
+                    if (filterFunction == 1) { // Sub
+                        if ((j - bytesPerPixel) >= 0) {
+                            scanline[j] = (scanline[j] + scanline[j - bytesPerPixel]) % 256;
+                        }
+                    }
+                    else if (filterFunction == 2) { // Up
+                        if (i != 0) {
+                            scanline[j] = (scanline[j] + previousDecodedScanline[j]) % 256;
+                        }
+                    }
+                    else if (filterFunction == 3) { // Average
+                        var leftNeighbour = 0;
+                        if ((j - bytesPerPixel) >= 0) {
+                            leftNeighbour = scanline[j - bytesPerPixel];
+                        }
+                        var upNeighbour = 0;
+                        if (i != 0) {
+                            upNeighbour = previousDecodedScanline[j];
+                        }
+                        scanline[j] = (scanline[j] + Math.floor((leftNeighbour + upNeighbour) / 2)) % 256;
+                    }
+                    else if (filterFunction == 4) { // Paeth
+                        var leftNeighbour = 0;
+                        if ((j - bytesPerPixel) >= 0) {
+                            leftNeighbour = scanline[j - bytesPerPixel];
+                        }
+                        var upNeighbour = 0;
+                        if (i != 0) {
+                            upNeighbour = previousDecodedScanline[j];
+                        }
+                        var upLeftNeighbour = 0;
+                        if (((j - bytesPerPixel) >= 0) && (i != 0)) {
+                            upLeftNeighbour = previousDecodedScanline[j - bytesPerPixel];
+                        }
+                        const p = leftNeighbour + upNeighbour - upLeftNeighbour;
+                        const pLeft = Math.abs(p - leftNeighbour);
+                        const pUp = Math.abs(p - upNeighbour);
+                        const pUpLeft = Math.abs(p - upLeftNeighbour);
+                        if ((pLeft <= pUp) && (pLeft <= pUpLeft)) {
+                            scanline[j] = (scanline[j] + leftNeighbour) % 256;
+                        }
+                        else if (pUp <= pUpLeft) {
+                            scanline[j] = (scanline[j] + upNeighbour) % 256;
+                        }
+                        else {
+                            scanline[j] = (scanline[j] + upLeftNeighbour) % 256;
+                        }
+                    }
+                }
+                previousDecodedScanline = scanline;
+                for (let j = 0; j < nbValues; j++) {
+                    const value = (scanline[Math.floor((j * depth) / 8)] >> ((8 - ((j + 1) * depth)) % 8)) & bitMask;
+                    if (colorType == 0) { // Grayscale
+                        pixels.push(value);
+                        pixels.push(value);
+                        pixels.push(value);
+                        pixels.push(255);
+                    }
+                    else if (colorType == 4) { // Grayscale + alpha
+                        if (j % 2 == 0) { // Grayscale
+                            pixels.push(value);
+                            pixels.push(value);
+                            pixels.push(value);
+                        }
+                        else {
+                            pixels.push(value); // Alpha
+                        }
+                    }
+                    else if (colorType == 3) { // Palette
+                        pixels.push(palette[value][0]);
+                        pixels.push(palette[value][1]);
+                        pixels.push(palette[value][2]);
+                        pixels.push(palette[value][3]);
+                    }
+                    else if (colorType == 2) { // True Color
+                        pixels.push(value);
+                        if ((j + 1) % 3 == 0) {
+                            pixels.push(255);
+                        }
+                    }
+                    else if (colorType == 6) { // True Color + alpha
+                        pixels.push(value);
+                    }
+                }
+                idat = idat.slice(Math.ceil((nbValues * depth) / 8));
+            }
+        }
+        else if (chunkType == "IEND") {
+            modelTextureWidth = width;
+            modelTextureHeight = height;
+            dataTexture = new Uint8Array(pixels).map((val, idx) => (gamma != 0.0) ? Math.floor((Math.pow(val / 255.0, gamma)) * 255.0) : val);
+            return;
+        }
+        else {
+            fileCheck.textContent = "Unknown PNG chunk type: \"" + chunkType + "\"";
+            return;
+        }
+        const chunkChecksum = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+    }
+}
 fileReader.addEventListener("loadend", (event) => {
-    providesNormals = false;
-    providesUV = false;
-    providesColors = false;
-    providesTangents = false;
-    const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.indexOf("."));
+    const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.lastIndexOf("."));
     if (extension == ".obj") {
         loadObj(fileReader);
+        reloadModel = true;
     }
     else if (extension == ".pcd") {
         loadPcd(fileReader);
+        reloadModel = true;
     }
-    reloadModel = true;
+    else if (extension == ".png") {
+        loadPng(fileReader);
+        reloadTexture = true;
+    }
 }, false);
 class Renderer {
     constructor() {
@@ -736,28 +1023,61 @@ class Renderer {
                 label: "Depth texture view"
             });
             this.positionVertexBuffer = this.device.createBuffer({
+                label: "Position vertex buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.normalVertexBuffer = this.device.createBuffer({
+                label: "Normal vertex buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.uvVertexBuffer = this.device.createBuffer({
+                label: "UV vertex buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.colorVertexBuffer = this.device.createBuffer({
+                label: "Color vertex buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.tangentVertexBuffer = this.device.createBuffer({
+                label: "Tangent vertex buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
             });
             this.indexBuffer = this.device.createBuffer({
+                label: "Index buffer",
                 size: 67108864,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+            });
+            this.modelTexture = this.device.createTexture({
+                label: "Model texture",
+                size: {
+                    width: 1,
+                    height: 1
+                },
+                mipLevelCount: 1,
+                sampleCount: 1,
+                dimension: "2d",
+                format: "rgba8unorm-srgb",
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+            });
+            this.modelTextureView = this.modelTexture.createView({
+                label: "Model texture view"
+            });
+            this.modelTextureSampler = this.device.createSampler({
+                label: "Model texture sampler",
+                addressModeU: "clamp-to-edge",
+                addressModeV: "clamp-to-edge",
+                addressModeW: "clamp-to-edge",
+                magFilter: "linear",
+                minFilter: "linear",
+                mipmapFilter: "linear",
+                lodMinClamp: 0,
+                lodMaxClamp: 0,
+                maxAnisotropy: 16
             });
             dataVertexPositions = new Float32Array([
                 0.0, 0.5, 0.0,
@@ -788,9 +1108,13 @@ class Renderer {
             providesColors = true;
             providesTangents = false;
             reloadModel = true;
+            dataTexture = new Uint8Array([128, 0, 128, 255]);
+            modelTextureWidth = 1;
+            modelTextureHeight = 1;
+            reloadTexture = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
-                size: 768 + 8,
+                size: 64,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
             const vertexShaderModule = this.device.createShaderModule({
@@ -801,6 +1125,10 @@ class Renderer {
                 label: "Fragment shader module",
                 code: fragmentShader
             });
+            const fragmentShaderTextureModule = this.device.createShaderModule({
+                label: "Fragment shader texture module",
+                code: fragmentShaderTexture
+            });
             this.bindGroupLayout = this.device.createBindGroupLayout({
                 label: "Bind group layout",
                 entries: [{
@@ -809,30 +1137,10 @@ class Renderer {
                         buffer: {
                             type: "uniform"
                         }
-                    },
-                    {
-                        binding: 1,
-                        visibility: GPUShaderStage.FRAGMENT,
-                        buffer: {
-                            type: "uniform"
-                        }
-                    },
-                    {
-                        binding: 2,
-                        visibility: GPUShaderStage.FRAGMENT,
-                        buffer: {
-                            type: "uniform"
-                        }
-                    },
-                    {
-                        binding: 3,
-                        visibility: GPUShaderStage.FRAGMENT,
-                        buffer: {
-                            type: "uniform"
-                        }
                     }]
             });
             this.renderPipelineBindGroup = this.device.createBindGroup({
+                label: "Bind group",
                 layout: this.bindGroupLayout,
                 entries: [{
                         binding: 0,
@@ -840,27 +1148,37 @@ class Renderer {
                             buffer: this.uniformBuffer,
                             offset: 0
                         }
+                    }]
+            });
+            this.textureBindGroupLayout = this.device.createBindGroupLayout({
+                label: "Texture bind group layout",
+                entries: [{
+                        binding: 0,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        texture: {
+                            sampleType: "float",
+                            viewDimension: "2d",
+                            multisampled: false
+                        }
                     },
                     {
                         binding: 1,
-                        resource: {
-                            buffer: this.uniformBuffer,
-                            offset: 256
+                        visibility: GPUShaderStage.FRAGMENT,
+                        sampler: {
+                            type: "filtering"
                         }
+                    }]
+            });
+            this.textureRenderPipelineBindGroup = this.device.createBindGroup({
+                label: "Texture bind group",
+                layout: this.textureBindGroupLayout,
+                entries: [{
+                        binding: 0,
+                        resource: this.modelTextureView
                     },
                     {
-                        binding: 2,
-                        resource: {
-                            buffer: this.uniformBuffer,
-                            offset: 512
-                        }
-                    },
-                    {
-                        binding: 3,
-                        resource: {
-                            buffer: this.uniformBuffer,
-                            offset: 768
-                        }
+                        binding: 1,
+                        resource: this.modelTextureSampler
                     }]
             });
             this.triangleSolidColorRenderPipeline = this.device.createRenderPipeline({
@@ -1137,6 +1455,55 @@ class Renderer {
                 fragment: {
                     module: fragmentShaderModule,
                     entryPoint: "simpleShadingMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
+            this.triangleTextureRenderPipeline = this.device.createRenderPipeline({
+                label: "Triangle texture render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Triangle texture render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout,
+                        this.textureBindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "uvMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 8,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x2",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderTextureModule,
+                    entryPoint: "textureMain",
                     targets: [{
                             format: "rgba16float"
                         }]
@@ -1421,6 +1788,55 @@ class Renderer {
                         }]
                 }
             });
+            this.pointTextureRenderPipeline = this.device.createRenderPipeline({
+                label: "Point texture render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Point texture render pipeline layout",
+                    bindGroupLayouts: [
+                        this.bindGroupLayout,
+                        this.textureBindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: vertexShaderModule,
+                    entryPoint: "uvMain",
+                    buffers: [{
+                            arrayStride: 12,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x3",
+                                    offset: 0,
+                                    shaderLocation: 0
+                                }]
+                        },
+                        {
+                            arrayStride: 8,
+                            stepMode: "vertex",
+                            attributes: [{
+                                    format: "float32x2",
+                                    offset: 0,
+                                    shaderLocation: 1
+                                }]
+                        }]
+                },
+                primitive: {
+                    topology: "point-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less"
+                },
+                fragment: {
+                    module: fragmentShaderTextureModule,
+                    entryPoint: "textureMain",
+                    targets: [{
+                            format: "rgba16float"
+                        }]
+                }
+            });
             const toSRGBVertexShaderModule = this.device.createShaderModule({
                 label: "To SRGB vertex shader module",
                 code: toSRGBVertexShader
@@ -1550,6 +1966,7 @@ class Renderer {
             if (dataVertexPositions.buffer.byteLength > this.positionVertexBuffer.size) {
                 this.positionVertexBuffer.destroy();
                 this.positionVertexBuffer = this.device.createBuffer({
+                    label: "Position vertex buffer",
                     size: dataVertexPositions.buffer.byteLength,
                     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
                 });
@@ -1558,6 +1975,7 @@ class Renderer {
             if (dataVertexNormals.buffer.byteLength > this.normalVertexBuffer.size) {
                 this.normalVertexBuffer.destroy();
                 this.normalVertexBuffer = this.device.createBuffer({
+                    label: "Normal vertex buffer",
                     size: dataVertexNormals.buffer.byteLength,
                     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
                 });
@@ -1566,6 +1984,7 @@ class Renderer {
             if (dataVertexUV.buffer.byteLength > this.uvVertexBuffer.size) {
                 this.uvVertexBuffer.destroy();
                 this.uvVertexBuffer = this.device.createBuffer({
+                    label: "UV vertex buffer",
                     size: dataVertexUV.buffer.byteLength,
                     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
                 });
@@ -1574,6 +1993,7 @@ class Renderer {
             if (dataVertexColors.buffer.byteLength > this.colorVertexBuffer.size) {
                 this.colorVertexBuffer.destroy();
                 this.colorVertexBuffer = this.device.createBuffer({
+                    label: "Color vertex buffer",
                     size: dataVertexColors.buffer.byteLength,
                     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
                 });
@@ -1582,6 +2002,7 @@ class Renderer {
             if (dataVertexTangents.buffer.byteLength > this.tangentVertexBuffer.size) {
                 this.tangentVertexBuffer.destroy();
                 this.tangentVertexBuffer = this.device.createBuffer({
+                    label: "Tangent vertex buffer",
                     size: dataVertexTangents.buffer.byteLength,
                     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
                 });
@@ -1591,6 +2012,7 @@ class Renderer {
                 if (dataIndices.buffer.byteLength > this.indexBuffer.size) {
                     this.indexBuffer.destroy();
                     this.indexBuffer = this.device.createBuffer({
+                        label: "Index buffer",
                         size: dataIndices.buffer.byteLength,
                         usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
                     });
@@ -1619,14 +2041,51 @@ class Renderer {
             }
             calculateModelTangents = false;
         }
+        if (reloadTexture) {
+            if ((modelTextureWidth != this.modelTexture.width) || (modelTextureHeight != this.modelTexture.height)) {
+                this.modelTexture.destroy();
+                this.modelTexture = this.device.createTexture({
+                    label: "Model texture",
+                    size: {
+                        width: modelTextureWidth,
+                        height: modelTextureHeight
+                    },
+                    mipLevelCount: 1,
+                    sampleCount: 1,
+                    dimension: "2d",
+                    format: "rgba8unorm-srgb",
+                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+                });
+                this.modelTextureView = this.modelTexture.createView({
+                    label: "Model texture view"
+                });
+            }
+            this.device.queue.writeTexture({
+                texture: this.modelTexture,
+                mipLevel: 0
+            }, dataTexture.buffer, {
+                offset: 0,
+                bytesPerRow: modelTextureWidth * 4
+            }, {
+                width: modelTextureWidth,
+                height: modelTextureHeight
+            });
+            this.textureRenderPipelineBindGroup = this.device.createBindGroup({
+                label: "Texture bind group",
+                layout: this.textureBindGroupLayout,
+                entries: [{
+                        binding: 0,
+                        resource: this.modelTextureView
+                    },
+                    {
+                        binding: 1,
+                        resource: this.modelTextureSampler
+                    }]
+            });
+            reloadTexture = false;
+        }
         const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(cameraPosition, cameraPosition.map((val, idx) => val + cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
-        const uniformDataTime = new Float32Array([timestamp / 1000.0]);
-        const uniformDataResolution = new Uint32Array([canvas.width, canvas.height]);
-        const uniformDataMouse = new Int32Array([mouseX, mouseY]);
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformDataCameraViewProj.buffer, 0, 64);
-        this.device.queue.writeBuffer(this.uniformBuffer, 256, uniformDataTime.buffer, 0, 4);
-        this.device.queue.writeBuffer(this.uniformBuffer, 512, uniformDataResolution.buffer, 0, 8);
-        this.device.queue.writeBuffer(this.uniformBuffer, 768, uniformDataMouse.buffer, 0, 8);
         const commandEncoder = this.device.createCommandEncoder({
             label: "Command encoder"
         });
@@ -1678,6 +2137,11 @@ class Renderer {
                 renderPassEncoder.setPipeline(this.triangleSimpleShadingRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
             }
+            else if (renderingModeSelection.value == "texture") {
+                renderPassEncoder.setBindGroup(1, this.textureRenderPipelineBindGroup);
+                renderPassEncoder.setPipeline(this.triangleTextureRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
+            }
             renderPassEncoder.setIndexBuffer(this.indexBuffer, "uint32", 0, this.indexBuffer.size);
             renderPassEncoder.drawIndexed(this.mesh.indexCount, this.mesh.instanceCount, this.mesh.firstIndex, this.mesh.baseVertex, this.mesh.firstInstance);
         }
@@ -1704,6 +2168,11 @@ class Renderer {
             else if (renderingModeSelection.value == "simpleShading") {
                 renderPassEncoder.setPipeline(this.pointSimpleShadingRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.normalVertexBuffer, 0, this.normalVertexBuffer.size);
+            }
+            else if (renderingModeSelection.value == "texture") {
+                renderPassEncoder.setBindGroup(1, this.textureRenderPipelineBindGroup);
+                renderPassEncoder.setPipeline(this.pointTextureRenderPipeline);
+                renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
             }
             renderPassEncoder.draw(nbVertices, 1, 0, 0);
         }
