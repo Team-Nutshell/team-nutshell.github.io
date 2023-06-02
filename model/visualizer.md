@@ -1,5 +1,6 @@
 # WebGPU Model Visualizer
 
+<script src="pako.js"></script>
 <script src="model_visualizer.js" defer></script>
 <p id="webgpuCheck"></p>
 <p id="webgpuFPS"></p>
