@@ -670,6 +670,8 @@ function loadPng(reader) {
     var interlace;
     var channelPerPixel;
     var colorSpace;
+    var gamma = 0.0;
+    var sbitDepth;
     var textKeyword;
     var textText;
     var iTextKeyword;
@@ -677,10 +679,12 @@ function loadPng(reader) {
     var iLanguageTag;
     var iTranslatedKeyword;
     var iTextText;
+    var zTextKeyword;
+    var zCompressionMethod;
+    var zCompressedText;
     var iccProfile;
     var iccCompressionMethod;
     var iccCompressedProfile;
-    var gamma = 0.0;
     var whitePointX = 0.0;
     var whitePointY = 0.0;
     var redX = 0.0;
@@ -748,6 +752,26 @@ function loadPng(reader) {
         else if (chunkType == "sRGB") {
             colorSpace = data[dataTraversal++];
         }
+        else if (chunkType == "gAMA") {
+            gamma = ((data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++]) / 100000.0;
+        }
+        else if (chunkType == "sBIT") {
+            if (colorType == 0) { // Grayscale
+                sbitDepth = data[dataTraversal++];
+            }
+            else if (colorType == 2) { // Truecolor
+                sbitDepth = (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            }
+            else if (colorType == 3) { // Palette
+                sbitDepth = (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            }
+            else if (colorType == 4) { // Grayscale + alpha
+                sbitDepth = (data[dataTraversal++] << 8) + data[dataTraversal++];
+            }
+            else if (colorType == 6) { // Truecolor + alpha
+                sbitDepth = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
+            }
+        }
         else if (chunkType == "tEXt") {
             const textTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
             const textNullTerminator = textTmp.indexOf("\0");
@@ -779,6 +803,15 @@ function loadPng(reader) {
             }
             dataTraversal += (chunkLength - iTextNullTerminator - iLanguageNullTerminator - iTranslationNullTerminator - 5);
         }
+        else if (chunkType == "zTXt") {
+            const zTextTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
+            const zTextNullTerminator = zTextTmp.indexOf("\0");
+            zTextKeyword = zTextTmp.slice(0, zTextNullTerminator + 1);
+            dataTraversal += zTextNullTerminator + 1;
+            zCompressionMethod = data[dataTraversal++];
+            zCompressedText = new TextDecoder().decode(pako.inflate(data.slice(dataTraversal, dataTraversal + (chunkLength - zTextNullTerminator - 2))));
+            dataTraversal += (chunkLength - zTextNullTerminator - 2);
+        }
         else if (chunkType == "iCCP") {
             const iccTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
             const iccNullTerminator = iccTmp.indexOf("\0");
@@ -787,9 +820,6 @@ function loadPng(reader) {
             iccCompressionMethod = data[dataTraversal++];
             iccCompressedProfile = pako.inflate(data.slice(dataTraversal, dataTraversal + (chunkLength - iccNullTerminator - 2)));
             dataTraversal += (chunkLength - iccNullTerminator - 2);
-        }
-        else if (chunkType == "gAMA") {
-            gamma = ((data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++]) / 100000.0;
         }
         else if (chunkType == "cHRM") {
             whitePointX = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
