@@ -453,7 +453,7 @@ fileSelector.addEventListener("change", (event) => {
             providesTangents = false;
             fileReader.readAsText(file);
         }
-        else if (extension == ".png") {
+        else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png") {
             fileCheck.textContent = "";
             fileReader.readAsArrayBuffer(file);
         }
@@ -567,6 +567,7 @@ function loadObj(reader) {
     dataVertexColors = new Float32Array(nbVertices * 3);
     dataVertexTangents = new Float32Array(nbVertices * 4);
     dataIndices = new Uint32Array(indices);
+    return true;
 }
 function loadPcd(reader) {
     const lines = reader.result.toString().split("\n");
@@ -667,6 +668,22 @@ function loadPcd(reader) {
     }
     dataVertexTangents = new Float32Array(nbVertices * 4);
     dataIndices = new Uint32Array(0);
+    return true;
+}
+function loadJpg(reader) {
+    const buffer = reader.result;
+    const data = new Uint8Array(buffer);
+    var dataTraversal = 0;
+    if (data[dataTraversal++] != 0xFF ||
+        data[dataTraversal++] != 0xD8) {
+        fileCheck.textContent = "Incorrect JPG header (should be 0xFF, 0xD8).";
+        return false;
+    }
+    while (dataTraversal < data.byteLength) {
+        const chunkMarker = (data[dataTraversal++] << 8) + data[dataTraversal++];
+        const chunkLength = (data[dataTraversal++] << 8) + data[dataTraversal++];
+    }
+    return false;
 }
 function loadPng(reader) {
     const buffer = reader.result;
@@ -726,6 +743,7 @@ function loadPng(reader) {
         data[dataTraversal++] != 0x1a ||
         data[dataTraversal++] != 0x0a) {
         fileCheck.textContent = "Incorrect PNG header (should be 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a).";
+        return false;
     }
     while (dataTraversal < data.byteLength) {
         const chunkLength = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
@@ -986,29 +1004,39 @@ function loadPng(reader) {
             }
             modelTextureWidth = width;
             modelTextureHeight = height;
-            dataTexture = new Uint8Array(pixels).map((val, idx) => (gamma != 0.0) ? Math.floor((Math.pow(val / 255.0, gamma)) * 255.0) : val);
-            return;
+            dataTexture = new Uint8Array(pixels);
+            return true;
         }
         else {
-            fileCheck.textContent = "Unknown PNG chunk type: \"" + chunkType + "\"";
-            return;
+            fileCheck.textContent = "Unknown PNG chunk type: \"" + chunkType + "\".";
+            return false;
         }
         const chunkChecksum = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
     }
+    fileCheck.textContent = "Could not find \"IEND\" for PNG file.";
+    return false;
 }
 fileReader.addEventListener("loadend", (event) => {
     const extension = fileSelector.files[0].name.substring(fileSelector.files[0].name.lastIndexOf("."));
     if (extension == ".obj") {
-        loadObj(fileReader);
-        reloadModel = true;
+        if (loadObj(fileReader)) {
+            reloadModel = true;
+        }
     }
     else if (extension == ".pcd") {
-        loadPcd(fileReader);
-        reloadModel = true;
+        if (loadPcd(fileReader)) {
+            reloadModel = true;
+        }
+    }
+    else if (extension == ".jpg" || extension == ".jpeg") {
+        if (loadJpg(fileReader)) {
+            reloadTexture = true;
+        }
     }
     else if (extension == ".png") {
-        loadPng(fileReader);
-        reloadTexture = true;
+        if (loadPng(fileReader)) {
+            reloadTexture = true;
+        }
     }
 }, false);
 class Renderer {
