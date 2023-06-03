@@ -5,6 +5,7 @@
 <p id="webgpuCheck"></p>
 <p id="webgpuFPS"></p>
 <p id="webgpuModelInformation"></p>
+<p id="webgpuTextureInformation"></p>
 <center>
 	<canvas id="webgpuCanvas" width="980" height="550"></canvas>
 </center>

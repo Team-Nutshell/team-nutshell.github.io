@@ -440,6 +440,7 @@ var fileSelector = document.querySelector("#webgpuFile");
 var modelInformation = document.querySelector("#webgpuModelInformation");
 var nbVertices = 0;
 var nbTriangles = 0;
+var textureInformation = document.querySelector("#webgpuTextureInformation");
 fileSelector.addEventListener("change", (event) => {
     if (fileSelector.files[0]) {
         const file = fileSelector.files[0];
@@ -2268,6 +2269,7 @@ class Renderer {
                         resource: this.modelTextureSampler
                     }]
             });
+            textureInformation.textContent = "Texture Resolution: " + modelTextureWidth + "x" + modelTextureHeight + ", Mipmap Levels: " + this.modelTextureMipmapLevels;
             reloadTexture = false;
         }
         const uniformDataCameraViewProj = mat4x4Mult(perspectiveRH(45.0 * toRad, canvas.width / canvas.height, 0.03, 100.0), lookAtRH(cameraPosition, cameraPosition.map((val, idx) => val + cameraDirection[idx]), new Float32Array([0.0, 1.0, 0.0])));
