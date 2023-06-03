@@ -881,19 +881,7 @@ function loadPng(reader) {
             const bitsPerPixel = channelPerPixel * depth;
             const bytesPerPixel = Math.ceil(bitsPerPixel / 8);
             const nbValues = (bitsPerPixel * width) / depth;
-            var bitMask;
-            if (depth == 1) {
-                bitMask = 0b00000001;
-            }
-            else if (depth == 2) {
-                bitMask = 0b00000011;
-            }
-            else if (depth == 4) {
-                bitMask = 0b00001111;
-            }
-            else if (depth == 8) {
-                bitMask = 0b11111111;
-            }
+            var bitMask = (Math.pow(2, depth)) - 1;
             var previousDecodedScanline = new Uint8Array(nbValues);
             for (let i = 0; i < height; i++) {
                 const filterFunction = idat[0];
