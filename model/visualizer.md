@@ -35,6 +35,13 @@
 </div>
 <p id="webgpuFileCheck"></p>
 
+Supported model formats:
+- **.obj**
+- **.pcd** (Point Cloud Data)
+
+Supported image formats:
+- **.png**
+
 Click on the canvas to control the camera.
 
 Use **WASD** to move the camera.
