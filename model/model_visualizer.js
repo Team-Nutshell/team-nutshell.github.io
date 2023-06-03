@@ -129,7 +129,7 @@ fn textureMain(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4(sample.xyz, 1.0);
 }
 `;
-const toSRGBVertexShader = `
+const fullscreenTriangleVertexShader = `
 struct VertexShaderOutput {
 	@builtin(position) pos: vec4f,
 	@location(0) uv: vec2f
@@ -151,6 +151,15 @@ const toSRGBFragmentShader = `
 @fragment
 fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
 	return vec4f(pow(textureSample(colorTexture, colorSampler, vec2f(1.0 - uv.x, 1.0 - uv.y)).xyz, vec3f(1.0/2.2)), 1.0);
+}
+`;
+const passthroughFragmentShader = `
+@group(0) @binding(0) var texture: texture_2d<f32>;
+@group(0) @binding(1) var textureSampler: sampler;
+
+@fragment
+fn main(@location(0) uv: vec2f) -> @location(0) vec4f {
+	return vec4f(textureSample(texture, textureSampler, vec2f(uv.x, 1.0 - uv.y)));
 }
 `;
 const toDeg = 180.0 / 3.1415926535897932384626433832795;
@@ -1140,7 +1149,7 @@ class Renderer {
                 minFilter: "linear",
                 mipmapFilter: "linear",
                 lodMinClamp: 0,
-                lodMaxClamp: 0,
+                lodMaxClamp: 1000,
                 maxAnisotropy: 16
             });
             dataVertexPositions = new Float32Array([
@@ -1179,6 +1188,7 @@ class Renderer {
             dataTexture = new Uint8Array([128, 0, 128, 255]);
             modelTextureWidth = 1;
             modelTextureHeight = 1;
+            this.modelTextureMipmapLevels = 1;
             reloadTexture = true;
             this.uniformBuffer = this.device.createBuffer({
                 label: "Uniform buffer",
@@ -1905,9 +1915,9 @@ class Renderer {
                         }]
                 }
             });
-            const toSRGBVertexShaderModule = this.device.createShaderModule({
-                label: "To SRGB vertex shader module",
-                code: toSRGBVertexShader
+            const fullscreenTriangleVertexShaderModule = this.device.createShaderModule({
+                label: "Fullscreen triangle shader module",
+                code: fullscreenTriangleVertexShader
             });
             const toSRGBFragmentShaderModule = this.device.createShaderModule({
                 label: "To SRGB fragment shader module",
@@ -1952,7 +1962,7 @@ class Renderer {
                     ]
                 }),
                 vertex: {
-                    module: toSRGBVertexShaderModule,
+                    module: fullscreenTriangleVertexShaderModule,
                     entryPoint: "main"
                 },
                 primitive: {
@@ -1967,6 +1977,66 @@ class Renderer {
                             format: navigator.gpu.getPreferredCanvasFormat()
                         }]
                 }
+            });
+            const passthroughFragmentShaderModule = this.device.createShaderModule({
+                label: "Passthrough fragment shader module",
+                code: passthroughFragmentShader
+            });
+            this.mipmapBindGroupLayout = this.device.createBindGroupLayout({
+                label: "Mipmap bind group layout",
+                entries: [{
+                        binding: 0,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        texture: {
+                            sampleType: "float",
+                            viewDimension: "2d",
+                            multisampled: false
+                        }
+                    },
+                    {
+                        binding: 1,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        sampler: {
+                            type: "filtering"
+                        }
+                    }]
+            });
+            this.mipmapRenderPipeline = this.device.createRenderPipeline({
+                label: "Mipmap render pipeline",
+                layout: this.device.createPipelineLayout({
+                    label: "Mipmap render pipeline layout",
+                    bindGroupLayouts: [
+                        this.mipmapBindGroupLayout
+                    ]
+                }),
+                vertex: {
+                    module: fullscreenTriangleVertexShaderModule,
+                    entryPoint: "main"
+                },
+                primitive: {
+                    topology: "triangle-list",
+                    frontFace: "ccw",
+                    cullMode: "back"
+                },
+                fragment: {
+                    module: passthroughFragmentShaderModule,
+                    entryPoint: "main",
+                    targets: [{
+                            format: "rgba8unorm-srgb"
+                        }]
+                }
+            });
+            this.mipmapSampler = this.device.createSampler({
+                label: "Mipmap sampler",
+                addressModeU: "clamp-to-edge",
+                addressModeV: "clamp-to-edge",
+                addressModeW: "clamp-to-edge",
+                magFilter: "linear",
+                minFilter: "linear",
+                mipmapFilter: "linear",
+                lodMinClamp: 0,
+                lodMaxClamp: 0,
+                maxAnisotropy: 1
             });
         });
     }
@@ -2111,6 +2181,7 @@ class Renderer {
         }
         if (reloadTexture) {
             if ((modelTextureWidth != this.modelTexture.width) || (modelTextureHeight != this.modelTexture.height)) {
+                this.modelTextureMipmapLevels = Math.floor(Math.log2(Math.min(modelTextureWidth, modelTextureHeight)) + 1);
                 this.modelTexture.destroy();
                 this.modelTexture = this.device.createTexture({
                     label: "Model texture",
@@ -2118,11 +2189,11 @@ class Renderer {
                         width: modelTextureWidth,
                         height: modelTextureHeight
                     },
-                    mipLevelCount: 1,
+                    mipLevelCount: this.modelTextureMipmapLevels,
                     sampleCount: 1,
                     dimension: "2d",
                     format: "rgba8unorm-srgb",
-                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST
                 });
                 this.modelTextureView = this.modelTexture.createView({
                     label: "Model texture view"
@@ -2138,6 +2209,53 @@ class Renderer {
                 width: modelTextureWidth,
                 height: modelTextureHeight
             });
+            const mipmapCommandEncoder = this.device.createCommandEncoder({
+                label: "Mipmap command encoder"
+            });
+            var previousModelTextureView = this.modelTexture.createView({
+                label: "Previous model texture view mipmap",
+                baseMipLevel: 0,
+                mipLevelCount: 1
+            });
+            for (let i = 1; i < this.modelTextureMipmapLevels; i++) {
+                const currentModelTextureView = this.modelTexture.createView({
+                    label: "Current model texture view mipmap " + i,
+                    baseMipLevel: i,
+                    mipLevelCount: 1
+                });
+                const mipmapBindGroup = this.device.createBindGroup({
+                    label: "Mipmap bind group",
+                    layout: this.mipmapBindGroupLayout,
+                    entries: [{
+                            binding: 0,
+                            resource: previousModelTextureView
+                        },
+                        {
+                            binding: 1,
+                            resource: this.mipmapSampler
+                        }]
+                });
+                const mipmapRenderPassEncoder = mipmapCommandEncoder.beginRenderPass({
+                    label: "Mipmap render pass",
+                    colorAttachments: [{
+                            view: currentModelTextureView,
+                            clearValue: {
+                                r: 0.0,
+                                g: 0.0,
+                                b: 0.0,
+                                a: 0.0
+                            },
+                            loadOp: "clear",
+                            storeOp: "store"
+                        }]
+                });
+                mipmapRenderPassEncoder.setPipeline(this.mipmapRenderPipeline);
+                mipmapRenderPassEncoder.setBindGroup(0, mipmapBindGroup);
+                mipmapRenderPassEncoder.draw(3, 1, 0, 0);
+                mipmapRenderPassEncoder.end();
+                previousModelTextureView = currentModelTextureView;
+            }
+            this.device.queue.submit([mipmapCommandEncoder.finish()]);
             this.textureRenderPipelineBindGroup = this.device.createBindGroup({
                 label: "Texture bind group",
                 layout: this.textureBindGroupLayout,
