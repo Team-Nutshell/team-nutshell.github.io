@@ -121,7 +121,12 @@ const fragmentShaderTexture = `
 
 @fragment
 fn textureMain(@location(0) uv: vec2f) -> @location(0) vec4f {
-	return vec4(textureSample(modelTexture, modelSampler, uv).xyz, 1.0);
+	let sample: vec4f = textureSample(modelTexture, modelSampler, uv);
+	if (sample.w < 0.5) {
+		discard;
+	}
+
+	return vec4(sample.xyz, 1.0);
 }
 `;
 const toSRGBVertexShader = `
@@ -667,8 +672,13 @@ function loadPng(reader) {
     var colorSpace;
     var textKeyword;
     var textText;
+    var iTextKeyword;
+    var iCompressionMethod;
+    var iLanguageTag;
+    var iTranslatedKeyword;
+    var iTextText;
     var iccProfile;
-    var compressionMethod;
+    var iccCompressionMethod;
     var iccCompressedProfile;
     var gamma = 0.0;
     var whitePointX = 0.0;
@@ -689,7 +699,8 @@ function loadPng(reader) {
     var lastModifiedMinute;
     var lastModifiedSecond;
     var palette = [];
-    var idat;
+    var idatLength = 0;
+    var idatTmp = [];
     var pixels = [];
     var dataTraversal = 0;
     if (data[dataTraversal++] != 0x89 ||
@@ -714,6 +725,10 @@ function loadPng(reader) {
             compression = data[dataTraversal++];
             filter = data[dataTraversal++];
             interlace = data[dataTraversal++];
+            if (interlace == 1) {
+                fileCheck.textContent = "Interlacing in PNG files is not supported.";
+                return;
+            }
             if (colorType == 0) { // Grayscale
                 channelPerPixel = 1;
             }
@@ -741,12 +756,35 @@ function loadPng(reader) {
             textText = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + (chunkLength - textNullTerminator - 1)));
             dataTraversal += (chunkLength - textNullTerminator - 1);
         }
+        else if (chunkType == "iTXt") {
+            const iTextTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
+            const iTextNullTerminator = iTextTmp.indexOf("\0");
+            iTextKeyword = iTextTmp.slice(0, iTextNullTerminator + 1);
+            dataTraversal += iTextNullTerminator + 1;
+            const compressionFlag = data[dataTraversal++];
+            iCompressionMethod = data[dataTraversal++];
+            const iLanguageTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + (chunkLength - iTextNullTerminator - 3)));
+            const iLanguageNullTerminator = iLanguageTmp.indexOf("\0");
+            iLanguageTag = iLanguageTmp.slice(0, iLanguageNullTerminator + 1);
+            dataTraversal += iLanguageNullTerminator + 1;
+            const iTranslationTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + (chunkLength - iTextNullTerminator - iLanguageNullTerminator - 4)));
+            const iTranslationNullTerminator = iTranslationTmp.indexOf("\0");
+            iTranslatedKeyword = iLanguageTmp.slice(0, iTranslationNullTerminator + 1);
+            dataTraversal += iTranslationNullTerminator + 1;
+            if (compressionFlag == 0) {
+                iTextText = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + (chunkLength - iTextNullTerminator - iLanguageNullTerminator - iTranslationNullTerminator - 5)));
+            }
+            else if (compressionFlag == 1) {
+                iTextText = new TextDecoder().decode(pako.inflate(data.slice(dataTraversal, dataTraversal + (chunkLength - iTextNullTerminator - iLanguageNullTerminator - iTranslationNullTerminator - 5))));
+            }
+            dataTraversal += (chunkLength - iTextNullTerminator - iLanguageNullTerminator - iTranslationNullTerminator - 5);
+        }
         else if (chunkType == "iCCP") {
             const iccTmp = new TextDecoder().decode(data.slice(dataTraversal, dataTraversal + 79));
             const iccNullTerminator = iccTmp.indexOf("\0");
             iccProfile = iccTmp.slice(0, iccNullTerminator + 1);
             dataTraversal += iccNullTerminator + 1;
-            compressionMethod = data[dataTraversal++];
+            iccCompressionMethod = data[dataTraversal++];
             iccCompressedProfile = pako.inflate(data.slice(dataTraversal, dataTraversal + (chunkLength - iccNullTerminator - 2)));
             dataTraversal += (chunkLength - iccNullTerminator - 2);
         }
@@ -798,8 +836,18 @@ function loadPng(reader) {
             }
         }
         else if (chunkType == "IDAT") {
-            idat = pako.inflate(data.slice(dataTraversal, dataTraversal + chunkLength));
+            idatLength += chunkLength;
+            idatTmp.push(data.slice(dataTraversal, dataTraversal + chunkLength));
             dataTraversal += chunkLength;
+        }
+        else if (chunkType == "IEND") {
+            var idat = new Uint8Array(idatLength);
+            var idatOffset = 0;
+            idatTmp.forEach((val, idx) => {
+                idat.set(val, idatOffset);
+                idatOffset += val.length;
+            });
+            idat = pako.inflate(idat);
             const bitsPerPixel = channelPerPixel * depth;
             const bytesPerPixel = Math.ceil(bitsPerPixel / 8);
             const nbValues = (bitsPerPixel * width) / depth;
@@ -908,8 +956,6 @@ function loadPng(reader) {
                 }
                 idat = idat.slice(Math.ceil((nbValues * depth) / 8));
             }
-        }
-        else if (chunkType == "IEND") {
             modelTextureWidth = width;
             modelTextureHeight = height;
             dataTexture = new Uint8Array(pixels).map((val, idx) => (gamma != 0.0) ? Math.floor((Math.pow(val / 255.0, gamma)) * 255.0) : val);
@@ -1080,29 +1126,33 @@ class Renderer {
                 maxAnisotropy: 16
             });
             dataVertexPositions = new Float32Array([
-                0.0, 0.5, 0.0,
-                0.5, -0.5, 0.0,
-                -0.5, -0.5, 0.0
+                -0.5, 0.5, 0.0,
+                0.5, 0.5, 0.0,
+                -0.5, -0.5, 0.0,
+                0.5, -0.5, 0.0
             ]);
             dataVertexNormals = new Float32Array([
+                0.0, 0.0, -1.0,
                 0.0, 0.0, -1.0,
                 0.0, 0.0, -1.0,
                 0.0, 0.0, -1.0
             ]);
             dataVertexUV = new Float32Array([
-                0.5, 0.5,
-                0.5, 0.5,
-                0.5, 0.5
+                0.0, 0.0,
+                1.0, 0.0,
+                0.0, 1.0,
+                1.0, 1.0
             ]);
             dataVertexColors = new Float32Array([
                 1.0, 0.0, 0.0,
                 0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0
+                0.0, 0.0, 1.0,
+                1.0, 1.0, 1.0
             ]);
-            dataVertexTangents = new Float32Array(12);
-            dataIndices = new Uint32Array([0, 1, 2]);
-            nbVertices = 3;
-            nbTriangles = 1;
+            dataVertexTangents = new Float32Array(16);
+            dataIndices = new Uint32Array([0, 1, 2, 2, 1, 3]);
+            nbVertices = 4;
+            nbTriangles = 2;
             providesNormals = true;
             providesUV = true;
             providesColors = true;
