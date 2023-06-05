@@ -202,7 +202,7 @@ var modelTextureWidth;
 var modelTextureHeight;
 var canvas = document.querySelector("#webgpuCanvas");
 var fps = document.querySelector("#webgpuFPS");
-var nbFrames = 0;
+var numFrames = 0;
 var fpsTime = (new Date()).getTime();
 var fpsText = "FPS: 0";
 var frametimeText = "Frametime: 0ms";
@@ -438,8 +438,8 @@ var fileCheck = document.querySelector("#webgpuFileCheck");
 const fileReader = new FileReader();
 var fileSelector = document.querySelector("#webgpuFile");
 var modelInformation = document.querySelector("#webgpuModelInformation");
-var nbVertices = 0;
-var nbTriangles = 0;
+var numVertices = 0;
+var numTriangles = 0;
 var textureInformation = document.querySelector("#webgpuTextureInformation");
 fileSelector.addEventListener("change", (event) => {
     if (fileSelector.files[0]) {
@@ -453,7 +453,7 @@ fileSelector.addEventListener("change", (event) => {
             providesTangents = false;
             fileReader.readAsText(file);
         }
-        else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png") {
+        else if (extension == ".png") {
             fileCheck.textContent = "";
             fileReader.readAsArrayBuffer(file);
         }
@@ -549,23 +549,23 @@ function loadObj(reader) {
             }
         }
     }
-    nbVertices = vertexCount;
-    nbTriangles = indices.length / 3;
+    numVertices = vertexCount;
+    numTriangles = indices.length / 3;
     dataVertexPositions = new Float32Array(verticesPositions);
     if (providesNormals) {
         dataVertexNormals = new Float32Array(verticesNormals);
     }
     else {
-        dataVertexNormals = new Float32Array(nbVertices * 3);
+        dataVertexNormals = new Float32Array(numVertices * 3);
     }
     if (providesUV) {
         dataVertexUV = new Float32Array(verticesUV);
     }
     else {
-        dataVertexUV = new Float32Array(nbVertices * 2);
+        dataVertexUV = new Float32Array(numVertices * 2);
     }
-    dataVertexColors = new Float32Array(nbVertices * 3);
-    dataVertexTangents = new Float32Array(nbVertices * 4);
+    dataVertexColors = new Float32Array(numVertices * 3);
+    dataVertexTangents = new Float32Array(numVertices * 4);
     dataIndices = new Uint32Array(indices);
     return true;
 }
@@ -650,40 +650,25 @@ function loadPcd(reader) {
             verticesColors.push((color & 0x000000FF) / 255.0);
         }
     }
-    nbVertices = verticesPositions.length / 3;
-    nbTriangles = 0;
+    numVertices = verticesPositions.length / 3;
+    numTriangles = 0;
     dataVertexPositions = new Float32Array(verticesPositions);
     if (providesNormals) {
         dataVertexNormals = new Float32Array(verticesNormals);
     }
     else {
-        dataVertexNormals = new Float32Array(nbVertices * 3);
+        dataVertexNormals = new Float32Array(numVertices * 3);
     }
-    dataVertexUV = new Float32Array(nbVertices * 2);
+    dataVertexUV = new Float32Array(numVertices * 2);
     if (providesColors) {
         dataVertexColors = new Float32Array(verticesColors);
     }
     else {
-        dataVertexColors = new Float32Array(nbVertices * 3);
+        dataVertexColors = new Float32Array(numVertices * 3);
     }
-    dataVertexTangents = new Float32Array(nbVertices * 4);
+    dataVertexTangents = new Float32Array(numVertices * 4);
     dataIndices = new Uint32Array(0);
     return true;
-}
-function loadJpg(reader) {
-    const buffer = reader.result;
-    const data = new Uint8Array(buffer);
-    var dataTraversal = 0;
-    if (data[dataTraversal++] != 0xFF ||
-        data[dataTraversal++] != 0xD8) {
-        fileCheck.textContent = "Incorrect JPG header (should be 0xFF, 0xD8).";
-        return false;
-    }
-    while (dataTraversal < data.byteLength) {
-        const chunkMarker = (data[dataTraversal++] << 8) + data[dataTraversal++];
-        const chunkLength = (data[dataTraversal++] << 8) + data[dataTraversal++];
-    }
-    return false;
 }
 function loadPng(reader) {
     const buffer = reader.result;
@@ -908,13 +893,13 @@ function loadPng(reader) {
             idat = pako.inflate(idat);
             const bitsPerPixel = channelPerPixel * depth;
             const bytesPerPixel = Math.ceil(bitsPerPixel / 8);
-            const nbValues = (bitsPerPixel * width) / depth;
+            const numValues = (bitsPerPixel * width) / depth;
             var bitMask = (Math.pow(2, depth)) - 1;
-            var previousDecodedScanline = new Uint8Array(nbValues);
+            var previousDecodedScanline = new Uint8Array(numValues);
             for (let i = 0; i < height; i++) {
                 const filterFunction = idat[0];
                 idat = idat.slice(1);
-                const scanline = idat.slice(0, Math.ceil((nbValues * depth) / 8));
+                const scanline = idat.slice(0, Math.ceil((numValues * depth) / 8));
                 for (let j = 0; j < scanline.length; j++) {
                     if (filterFunction == 1) { // Sub
                         if ((j - bytesPerPixel) >= 0) {
@@ -966,7 +951,7 @@ function loadPng(reader) {
                     }
                 }
                 previousDecodedScanline = scanline;
-                for (let j = 0; j < nbValues; j++) {
+                for (let j = 0; j < numValues; j++) {
                     const value = (scanline[Math.floor((j * depth) / 8)] >> ((8 - ((j + 1) * depth)) % 8)) & bitMask;
                     if (colorType == 0) { // Grayscale
                         pixels.push(value);
@@ -1000,7 +985,7 @@ function loadPng(reader) {
                         pixels.push(value);
                     }
                 }
-                idat = idat.slice(Math.ceil((nbValues * depth) / 8));
+                idat = idat.slice(Math.ceil((numValues * depth) / 8));
             }
             modelTextureWidth = width;
             modelTextureHeight = height;
@@ -1026,11 +1011,6 @@ fileReader.addEventListener("loadend", (event) => {
     else if (extension == ".pcd") {
         if (loadPcd(fileReader)) {
             reloadModel = true;
-        }
-    }
-    else if (extension == ".jpg" || extension == ".jpeg") {
-        if (loadJpg(fileReader)) {
-            reloadTexture = true;
         }
     }
     else if (extension == ".png") {
@@ -1207,8 +1187,8 @@ class Renderer {
             ]);
             dataVertexTangents = new Float32Array(16);
             dataIndices = new Uint32Array([0, 1, 2, 2, 1, 3]);
-            nbVertices = 4;
-            nbTriangles = 2;
+            numVertices = 4;
+            numTriangles = 2;
             providesNormals = true;
             providesUV = true;
             providesColors = true;
@@ -2072,11 +2052,11 @@ class Renderer {
     update(timestamp) {
         const deltaTime = timestamp - this.previousTime;
         this.previousTime = timestamp;
-        nbFrames++;
+        numFrames++;
         var currentTime = (new Date()).getTime();
         if ((currentTime - fpsTime) >= 1000.0) {
-            fpsText = "FPS: " + nbFrames;
-            nbFrames = 0;
+            fpsText = "FPS: " + numFrames;
+            numFrames = 0;
             fpsTime += 1000.0;
         }
         frametimeText = "Frametime: " + deltaTime.toFixed(2) + "ms";
@@ -2187,7 +2167,7 @@ class Renderer {
                 this.device.queue.writeBuffer(this.indexBuffer, 0, dataIndices.buffer, 0, dataIndices.byteLength);
             }
             this.mesh.indexCount = dataIndices.length;
-            modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: " + (providesTangents ? "Yes" : "No");
+            modelInformation.textContent = "Vertices: " + numVertices + ", Triangles: " + numTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: " + (providesTangents ? "Yes" : "No");
             reloadModel = false;
         }
         if (calculateModelTangents) {
@@ -2201,7 +2181,7 @@ class Renderer {
                     });
                 }
                 this.device.queue.writeBuffer(this.tangentVertexBuffer, 0, dataVertexTangents.buffer, 0, dataVertexTangents.byteLength);
-                modelInformation.textContent = "Vertices: " + nbVertices + ", Triangles: " + nbTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: Calculated (Lengyel, 2001)";
+                modelInformation.textContent = "Vertices: " + numVertices + ", Triangles: " + numTriangles + ", Normals: " + (providesNormals ? " Yes" : " No") + ", UV: " + (providesUV ? "Yes" : "No") + ", Colors: " + (providesColors ? "Yes" : "No") + ", Tangents: Calculated (Lengyel, 2001)";
             }
             else {
                 fileCheck.textContent = "Tangents cannot be calculated for this model as normals, UV or indices are missing.";
@@ -2390,7 +2370,7 @@ class Renderer {
                 renderPassEncoder.setPipeline(this.pointTextureRenderPipeline);
                 renderPassEncoder.setVertexBuffer(1, this.uvVertexBuffer, 0, this.uvVertexBuffer.size);
             }
-            renderPassEncoder.draw(nbVertices, 1, 0, 0);
+            renderPassEncoder.draw(numVertices, 1, 0, 0);
         }
         renderPassEncoder.end();
         const toSRGBRenderPassEncoder = commandEncoder.beginRenderPass({
