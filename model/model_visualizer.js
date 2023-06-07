@@ -993,8 +993,7 @@ function loadPng(reader) {
             return true;
         }
         else {
-            fileCheck.textContent = "Unknown PNG chunk type: \"" + chunkType + "\".";
-            return false;
+            dataTraversal += chunkLength;
         }
         const chunkChecksum = (data[dataTraversal++] << 24) + (data[dataTraversal++] << 16) + (data[dataTraversal++] << 8) + data[dataTraversal++];
     }
