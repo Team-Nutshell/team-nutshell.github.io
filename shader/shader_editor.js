@@ -76,6 +76,7 @@ var editableFragmentShader = document.querySelector("#webgpuFragmentShader");
 new ResizeObserver(() => {
     refreshButton.style.height = editableFragmentShader.style.height;
 }).observe(editableFragmentShader);
+var shiftInEditorPressed = false;
 const urlShaderBase64 = location.hash.substring(1).replace(/%3D/g, "=");
 if (urlShaderBase64.length > 0) {
     try {
@@ -142,12 +143,89 @@ document.addEventListener("keydown", (event) => {
         }
     }
     else if (event.target == editableFragmentShader) {
+        if (event.code == "ShiftLeft" || event.code == "ShiftRight") {
+            shiftInEditorPressed = true;
+        }
         if (event.code == "Tab") {
             const start = editableFragmentShader.selectionStart;
-            editableFragmentShader.focus();
-            if (document.execCommand) { // Deprecated
-                document.execCommand("insertText", false, "\t");
+            const end = editableFragmentShader.selectionEnd;
+            var finalCursorStartPosition = start;
+            var finalCursorEndPosition = end;
+            if (!shiftInEditorPressed) {
+                if (start == end) {
+                    editableFragmentShader.focus();
+                    if (document.execCommand) { // Deprecated
+                        document.execCommand("insertText", false, "\t");
+                    }
+                    finalCursorStartPosition++;
+                    finalCursorEndPosition++;
+                }
+                else {
+                    var newlinePosition;
+                    // Before selection start
+                    if ((newlinePosition = editableFragmentShader.value.substring(0, start).lastIndexOf("\n")) != -1) {
+                        editableFragmentShader.selectionStart = newlinePosition + 1;
+                        editableFragmentShader.selectionEnd = newlinePosition + 1;
+                    }
+                    else { // Text start
+                        editableFragmentShader.selectionStart = 0;
+                        editableFragmentShader.selectionEnd = 0;
+                    }
+                    editableFragmentShader.focus();
+                    if (document.execCommand) { // Deprecated
+                        document.execCommand("insertText", false, "\t");
+                    }
+                    finalCursorStartPosition++;
+                    finalCursorEndPosition++;
+                    var tmpStart = finalCursorStartPosition;
+                    // In selection
+                    while ((newlinePosition = editableFragmentShader.value.indexOf("\n", tmpStart)) != -1) {
+                        if (newlinePosition >= finalCursorEndPosition) {
+                            break;
+                        }
+                        editableFragmentShader.selectionStart = newlinePosition + 1;
+                        editableFragmentShader.selectionEnd = newlinePosition + 1;
+                        editableFragmentShader.focus();
+                        if (document.execCommand) { // Deprecated
+                            document.execCommand("insertText", false, "\t");
+                        }
+                        tmpStart = newlinePosition + 1;
+                        finalCursorEndPosition++;
+                    }
+                }
             }
+            else {
+                var tabPosition;
+                // Before selection start
+                var tmpValue = editableFragmentShader.value.substring(0, finalCursorStartPosition);
+                if (((tabPosition = tmpValue.lastIndexOf("\t")) != -1) && (tabPosition > tmpValue.lastIndexOf("\n"))) {
+                    editableFragmentShader.selectionStart = tabPosition + 1;
+                    editableFragmentShader.selectionEnd = tabPosition + 1;
+                    editableFragmentShader.focus();
+                    if (document.execCommand) { // Deprecated
+                        document.execCommand("delete", false);
+                    }
+                    finalCursorStartPosition--;
+                    finalCursorEndPosition--;
+                }
+                var tmpStart = finalCursorStartPosition;
+                // In selection
+                while ((tabPosition = editableFragmentShader.value.indexOf("\t", editableFragmentShader.value.indexOf("\n", tmpStart))) != -1) {
+                    if (tabPosition >= finalCursorEndPosition) {
+                        break;
+                    }
+                    editableFragmentShader.selectionStart = tabPosition + 1;
+                    editableFragmentShader.selectionEnd = tabPosition + 1;
+                    editableFragmentShader.focus();
+                    if (document.execCommand) { // Deprecated
+                        document.execCommand("delete", false);
+                    }
+                    tmpStart = tabPosition + 1;
+                    finalCursorEndPosition--;
+                }
+            }
+            editableFragmentShader.selectionStart = finalCursorStartPosition;
+            editableFragmentShader.selectionEnd = finalCursorEndPosition;
             event.preventDefault();
         }
     }
@@ -185,6 +263,11 @@ document.addEventListener("keyup", (event) => {
             case "ShiftLeft":
                 shiftPressed = false;
                 break;
+        }
+    }
+    else if (event.target == editableFragmentShader) {
+        if (event.code == "ShiftLeft" || event.code == "ShiftRight") {
+            shiftInEditorPressed = false;
         }
     }
 }, false);
