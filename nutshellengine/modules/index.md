@@ -22,6 +22,7 @@
 | Name | Description |
 | ------------- | ------------- |
 | [**default**](https://github.com/Team-Nutshell/NutshellEngine-PhysicsModule) | Empty module. |
+| [**euler**](https://github.com/Team-Nutshell/NutshellEngine-PhysicsModule/tree/module/euler) | Using an Euler integrator. |
 
 ## Window Modules
 
