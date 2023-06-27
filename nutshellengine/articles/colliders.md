@@ -318,7 +318,7 @@ IntersectionInformation intersect(Capsule capsule1, Capsule capsule2) {
 ## Conclusion
 With these algorithms, an integrator and a collision reponse system, you can now make objects collide.
 
-<video src="https://cdn.discordapp.com/attachments/952969158499385419/1123298433613180968/collisions.mp4"></video>
+<video src="https://cdn.discordapp.com/attachments/952969158499385419/1123298433613180968/collisions.mp4" controls></video>
 
 ## References
 - <sup>1</sup>[**Real-Time Collision Detection - Christer Ericson**](https://realtimecollisiondetection.net/)
