@@ -13,7 +13,7 @@
 | [**<img src="https://i.imgur.com/rP4riaN.png" width="150px"><br>vulkan-renderer**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-renderer) | Draw models (meshes and textures) with Vulkan. |
 | [**<img src="https://i.imgur.com/Zdlfmmt.png" width="150px"><br>vulkan-collider**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-collider) | Draw colliders with Vulkan. |
 | [**<img src="https://i.imgur.com/C6zE59w.png" width="150px"><br>vulkan-ray-tracing**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-ray-tracing) | Draw models (meshes and textures) using ray tracing with Vulkan. |
-| [**<img src="https://i.imgur.com/C0rkr58.png" width="150px"><br>vulkan-path-tracing**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-path-tracing) | Draw models (meshes and textures) using path tracing with Vulkan. |
+| [**<img src="https://i.imgur.com/G8o1ewD.png" width="150px"><br>vulkan-path-tracing**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-path-tracing) | Draw models (meshes and textures) using path tracing with Vulkan. |
 
 ## Physics Modules
 
@@ -36,3 +36,10 @@
 | ------------- | ------------- |
 | [**default**](https://github.com/Team-Nutshell/NutshellEngine-AudioModule) | Empty module. |
 | [**openal-soft**](https://github.com/Team-Nutshell/NutshellEngine-AudioModule/tree/module/openal-soft) | Implementation using OpenAL-Soft. |
+
+## Asset Loader Modules
+
+| Name | Description |
+| ------------- | ------------- |
+| [**default**](https://github.com/Team-Nutshell/NutshellEngine-AssetLoaderModule) | Empty module. |
+| [**multi**](https://github.com/Team-Nutshell/NutshellEngine-AssetLoaderModule/tree/module/multi) | Load multiple types of files. |
