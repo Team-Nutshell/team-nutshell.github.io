@@ -3,8 +3,8 @@
 # [NutshellEngine](nutshellengine/index.md)
 [**NutshellEngine**](https://github.com/Team-Nutshell) is a modular game engine.
 
-# [nml](https://github.com/Team-Nutshell/nml)
-[**nml**](https://github.com/Team-Nutshell/nml/releases) (Nutshell Mathematics Library) is a C++ mathematics library for computer graphics. [**Documentation**](https://team-nutshell.github.io/nml/).
+# [nml](nml)
+[**nml**](https://github.com/Team-Nutshell/nml) (Nutshell Mathematics Library) is a C++ mathematics library for computer graphics.
 
 # Tools
 ## [WebGPU Shader Editor (WGSL)](shader/editor.md)
