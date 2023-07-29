@@ -21,6 +21,7 @@ NutshellEngine features:
 ## [Other applications made with NutshellEngine](other_applications/index.md)
 
 ## Articles
+- [**Mistakes will be made**](articles/mistakes.md)
 - [**Colliders, intersection normal and penetration depth**](articles/colliders.md)
 - [**NutshellEngine, a presentation**](articles/presentation.md)
 
