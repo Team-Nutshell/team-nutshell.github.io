@@ -1039,19 +1039,12 @@ class Renderer {
             if (!this.adapter) {
                 throw Error("Could not request WebGPU adapter.");
             }
-            if (this.adapter.limits.maxBufferSize) {
-                this.device = yield this.adapter.requestDevice({
-                    label: "Device",
-                    requiredLimits: {
-                        "maxBufferSize": this.adapter.limits.maxBufferSize
-                    }
-                });
-            }
-            else {
-                this.device = yield this.adapter.requestDevice({
-                    label: "Device"
-                });
-            }
+            this.device = yield this.adapter.requestDevice({
+                label: "Device",
+                requiredLimits: {
+                    "maxBufferSize": 2147483648
+                }
+            });
             if (!this.device) {
                 throw Error("Could not request WebGPU device.");
             }
