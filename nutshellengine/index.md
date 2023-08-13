@@ -9,10 +9,12 @@
 - [**Asset Loader Module**](https://github.com/Team-Nutshell/NutshellEngine-AssetLoaderModule): Module loading assets used by NutshellEngine's applications and modules.
 
 NutshellEngine features:
-- Swappable modules without recompiling the application.
-- C++ entity scripting.
-- Job system for multithreading.
-- Networking abstraction.
+- Swappable modules without recompiling the application;
+- C++ entity scripting;
+- Job system for multithreading;
+- Networking abstraction;
+- Assets (images, models, sounds, scenes, ...) management system;
+- User Interface API.
 
 ## [Modules](modules/index.md)
 
