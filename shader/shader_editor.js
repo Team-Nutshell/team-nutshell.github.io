@@ -533,22 +533,20 @@ class Renderer {
                     code: preDefinedFragmentShader + editableFragmentShader.value
                 });
                 var compilationSuccess = true;
-                if (fragmentShaderModule.getCompilationInfo) {
-                    const compilationInfo = yield fragmentShaderModule.getCompilationInfo();
-                    for (const message of compilationInfo.messages) {
-                        if (message.type == "error") {
-                            compilationMessage.textContent += "Error: ";
-                            compilationSuccess = false;
-                        }
-                        else if (message.type == "warning") {
-                            compilationMessage.textContent += "Warning: ";
-                        }
-                        else if (message.type == "info") {
-                            compilationMessage.textContent += "Info: ";
-                        }
-                        const errorLine = (preDefinedFragmentShader + editableFragmentShader.value).split("\n", message.lineNum)[message.lineNum - 1].trim();
-                        compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + ((message.lineNum != 0) ? ("\n" + errorLine) : "") + "\n";
+                const compilationInfo = yield fragmentShaderModule.getCompilationInfo();
+                for (const message of compilationInfo.messages) {
+                    if (message.type == "error") {
+                        compilationMessage.textContent += "Error: ";
+                        compilationSuccess = false;
                     }
+                    else if (message.type == "warning") {
+                        compilationMessage.textContent += "Warning: ";
+                    }
+                    else if (message.type == "info") {
+                        compilationMessage.textContent += "Info: ";
+                    }
+                    const errorLine = (preDefinedFragmentShader + editableFragmentShader.value).split("\n", message.lineNum)[message.lineNum - 1].trim();
+                    compilationMessage.textContent += "Line: " + message.lineNum + ", Position: " + message.linePos + ": " + message.message + ((message.lineNum != 0) ? ("\n" + errorLine) : "") + "\n";
                 }
                 if (compilationSuccess) {
                     this.renderPipeline = this.device.createRenderPipeline({
