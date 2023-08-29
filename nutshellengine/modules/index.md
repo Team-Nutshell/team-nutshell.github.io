@@ -14,7 +14,7 @@
 | [**<img src="https://i.imgur.com/Zdlfmmt.png" width="150px"><br>vulkan-collider**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-collider) | Draw colliders with Vulkan. |
 | [**<img src="https://i.imgur.com/C6zE59w.png" width="150px"><br>vulkan-ray-tracing**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-ray-tracing) | Draw models (meshes and textures) using ray tracing with Vulkan. |
 | [**<img src="https://i.imgur.com/G8o1ewD.png" width="150px"><br>vulkan-path-tracing**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/vulkan-path-tracing) | Draw models (meshes and textures) using path tracing with Vulkan. |
-| [**<img src="https://i.imgur.com/r4FkR9m.png" width="150px"><br>neige**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/neige) | Implement rendering technics, to be used in a game or application. |
+| [**<img src="https://i.imgur.com/KtzmmsC.png" width="150px"><br>neige**](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/neige) | Implement rendering technics, to be used in a game or application. |
 
 ## Physics Modules
 
