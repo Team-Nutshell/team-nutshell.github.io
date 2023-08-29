@@ -81,7 +81,7 @@ In this article, the intersection normal goes from the first object to the secon
 ### Sphere - Sphere
 ![Sphere - Sphere](colliders/sphere_sphere.png)
 
-Two sphere are intersecting when the distance between their centers is inferior to the sum of their radiuses. We also want to check if this difference is not null, as it would cause a NaN intersection normal during the normalization (as a reminder, the normalization of v is ``v / length(v)``, if ``length(v)`` is equal to 0.0, then it would perform a division by zero, resulting in NaN).
+Two spheres are intersecting when the distance between their centers is inferior to the sum of their radiuses. We also want to check if this difference is not null, as it would cause a NaN intersection normal during the normalization (as a reminder, the normalization of v is ``v / length(v)``, if ``length(v)`` is equal to 0.0, then it would perform a division by zero, resulting in NaN).
 
 The intersection normal is the unit vector from the first sphere's center to the second sphere's center, and the penetration depth is the sum of their radiuses minus the distance between their centers.
 
