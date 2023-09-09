@@ -10,11 +10,13 @@
 
 NutshellEngine features:
 - Swappable modules without recompiling the application;
-- C++ entity scripting;
+- C++ entity scripting (with a [ScriptingAPI](nutshellengine-docs/scripting/api/index.html) documentation);
 - Job system for multithreading;
 - Networking abstraction;
 - Assets (images, models, sounds, scenes, ...) management system;
 - User Interface API.
+
+## [Documentation](nutshellengine-docs)
 
 ## [Modules](modules/index.md)
 
