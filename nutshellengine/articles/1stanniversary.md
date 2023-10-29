@@ -1,6 +1,6 @@
 # NutshellEngine's 1st anniversary!
 
-[![1st Anniversary Showcase](1stanniversary/showcase.png)](https://www.youtube.com/watch?v=JVFEKWaqpMk)
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/JVFEKWaqpMk" title="NutshellEngine 1st Anniversary Showcase" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 *NutshellEngine 1st Anniversary Showcase video (click to access it)*
 
@@ -29,7 +29,7 @@ I really appreciate the aesthetic of **old 3D games** like DOOM, but at high res
 
 I also really like making games that **use the window itself** (spoiler?). One of my previous game prototype was [Window Explorers](https://zaonirinku.itch.io/window-explorers), made with GameMaker Studio 2, where the player would open the game twice and connect them to each other over network. They could then move the characters (the little blue and red squares), which would move the window on the screen to show the map's layout.
 
-[![Window Explorers](1stanniversary/window_explorers.png)](https://www.youtube.com/watch?v=9TRDOF6XXkc)
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/9TRDOF6XXkc" title="Window Explorers" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 *Window Explorers, made with GameMaker Studio 2*
 
