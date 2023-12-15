@@ -9,3 +9,5 @@
 # Tools
 - [**WebGPU Shader Editor (WGSL)**](shader/editor.md): WGSL Shader Editor using WebGPU.
 - [**WebGPU Model Visualizer**](model/visualizer.md): Model visualizer using WebGPU.
+
+## [Contact](mailto:contact@team-nutshell.dev)
