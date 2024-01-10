@@ -10,7 +10,7 @@ Today marks the **first anniversary of NutshellEngine**, with the first reposito
 
 *GitHub commits, mostly on NutshellEngine, only takes the main branches in count*
 
-NutshellEngine is my **biggest project to date**, and it's **not even the longest lasting at the moment**, as [NeigeEngine](https://github.com/ZaOniRinku/NeigeEngine) has been worked on for nearly two years (from July 2020 to May 2022). But even though NutshellEngine is only half its age, it's already way bigger than what NeigeEngine was, which **wouldn't have been possible if I hadn't worked on NeigeEngine before**.
+NutshellEngine is my **biggest project to date**, and it's **not even the longest lasting at the moment**, as [NeigeEngine](https://github.com/ntsh-oni/NeigeEngine) has been worked on for nearly two years (from July 2020 to May 2022). But even though NutshellEngine is only half its age, it's already way bigger than what NeigeEngine was, which **wouldn't have been possible if I hadn't worked on NeigeEngine before**.
 
 NeigeEngine was great **for experimenting and learning**, which is also the case for NutshellEngine, it is the first reason why I decided to make a modular game engine: to be able to **fail and repeat easily** (more about this in the [Mistakes will be made](mistakes.md) article), which is, I feel, an important part in making a game engine while still learning how to do it. NeigeEngine was not really good at this, and with experience, some design choices didn't please me anymore, but changing them was way too complicated, so starting back from zero was needed.
 
@@ -18,7 +18,7 @@ NeigeEngine was great **for experimenting and learning**, which is also the case
 
 ## What is NutshellEngine?
 
-NutshellEngine is a **game engine** made by **Team Nutshell** (it's called a "Team" but there is only me, ZaOniRinku, at the moment). This game engine is modular, which means that **it uses modules** to enable game developers and game engine developers to work together by putting all the technical parts (graphics engine, physics engine, audio system, window and inputs, assets loading) in modules that can be swapped without changing a single line of scripting code nor recompiling the game. That way, gameplay programmers can work on the game using some already-made modules (like the [ones available here](https://www.team-nutshell.dev/nutshellengine/modules/)) while the engine developers can work on the graphics or physics engine, for example, in parallel.
+NutshellEngine is a **game engine** made by **Team Nutshell** (it's called a "Team" but there is only me at the moment). This game engine is modular, which means that **it uses modules** to enable game developers and game engine developers to work together by putting all the technical parts (graphics engine, physics engine, audio system, window and inputs, assets loading) in modules that can be swapped without changing a single line of scripting code nor recompiling the game. That way, gameplay programmers can work on the game using some already-made modules (like the [ones available here](https://www.team-nutshell.dev/nutshellengine/modules/)) while the engine developers can work on the graphics or physics engine, for example, in parallel.
 
 [Team Nutshell's website](https://www.team-nutshell.dev/nutshellengine/) contains more information.
 
@@ -27,13 +27,13 @@ NutshellEngine is a **game engine** made by **Team Nutshell** (it's called a "Te
 
 I really appreciate the aesthetic of **old 3D games** like DOOM, but at high resolution, and this is what started The Girl Near The Window.
 
-I also really like making games that **use the window itself** (spoiler?). One of my previous game prototype was [Window Explorers](https://zaonirinku.itch.io/window-explorers), made with GameMaker Studio 2, where the player would open the game twice and connect them to each other over network. They could then move the characters (the little blue and red squares), which would move the window on the screen to show the map's layout.
+I also really like making games that **use the window itself** (spoiler?). One of my previous game prototype was [Window Explorers](https://ntsh-oni.itch.io/window-explorers), made with GameMaker Studio 2, where the player would open the game twice and connect them to each other over network. They could then move the characters (the little blue and red squares), which would move the window on the screen to show the map's layout.
 
 <iframe width="980" height="550" src="https://www.youtube.com/embed/9TRDOF6XXkc" title="Window Explorers" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 *Window Explorers, made with GameMaker Studio 2*
 
-I also made [another game prototype](https://twitter.com/ZaOniRinku/status/1441115827416092679) where a window would be a character, and [other windows would be platforms and obstacles](https://twitter.com/ZaOniRinku/status/1452666974366994445).
+I also made another game prototype where a window would be a character, and other windows would be platforms and obstacles.
 
 The Girl Near The Window would follow this idea to **use the actual window as a gameplay mechanic** (which is not a good idea if you want to make games for consoles).
 
@@ -57,7 +57,7 @@ The main.cpp of this project is absolutely atrocious, as **the entire scene is w
 
 *The map from The Girl Near The Window, in Blender*
 
-But even though the development was chaotic (for only 10 days, which is fine, I guess), [the game released](https://zaonirinku.itch.io/the-girl-near-the-window)! And even more surprising, some people actually played it, with only two players reporting an issue (one of them was the AMD GPU issue and the other one heard coil whine coming from their GPU, which *probably* came from the fact that the game was not frame limited, and not CPU intensive, which means that the GPU was running at 100% capacity to produce thousands of frames per second).
+But even though the development was chaotic (for only 10 days, which is fine, I guess), [the game released](https://ntsh-oni.itch.io/the-girl-near-the-window)! And even more surprising, some people actually played it, with only two players reporting an issue (one of them was the AMD GPU issue and the other one heard coil whine coming from their GPU, which *probably* came from the fact that the game was not frame limited, and not CPU intensive, which means that the GPU was running at 100% capacity to produce thousands of frames per second).
 
 ![The Girl Near The Window](https://www.team-nutshell.dev/nutshellengine/assets/images/tgntw.png)
 
@@ -70,14 +70,14 @@ The second game would come way quiker than I expected, as the [**Global Game Jam
 
 For this gamejam, I didn't want to do the same graphics as The Girl Near The Window, and I am not good enough at Blender to make my own 3D models, especially if I have only 48 hours to make an entire game. So I decided to go with **raymarching**. I love writing shaders and raymarching is not an issue for me, so that was a pretty good choice for a gamejam.
 
-I made [The Origin of Light](https://zaonirinku.itch.io/the-origin-of-light-ggj-2023) during this gamejam. Performance were absolutely terrible, which is not the engine's fault, as the entire graphics run on a single raymarching fragment shader, where I did not optimize the signed distance field calculations, but it was playable at low resolution.
+I made [The Origin of Light](https://ntsh-oni.itch.io/the-origin-of-light-ggj-2023) during this gamejam. Performance were absolutely terrible, which is not the engine's fault, as the entire graphics run on a single raymarching fragment shader, where I did not optimize the signed distance field calculations, but it was playable at low resolution.
 
 ![The Origin of Light](1stanniversary/theoriginoflight.png)
 
 *The Origin of Light*
 
 ## Taking a break
-The most keen-eyed readers will notice that **there was not a lot of commits** on my GitHub account between around the end of the Global Game Jam and the end of May. The reason is simple: working on NutshellEngine became **exhausting**, especially because of a huge mistake I did when starting the project (more on that later). During this period, I started to work on [Team Nutshell's website](https://www.team-nutshell.dev/) (which is where you're probably reading this article). I am no web developer so I just used GitHub Pages and made [a custom CSS](https://github.com/ZaOniRinku/GitHubPagesDefaultThemeDark). I also learned about WebGPU and started experimenting with it in C++ (even making a [graphics module for NutshellEngine](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/webgpu-triangle)) and TypeScript (made a [WGSL shader editor](https://www.team-nutshell.dev/shader/editor.html) and a [simple model viewer](https://www.team-nutshell.dev/model/visualizer.html)), did not like it and moved on (wrote [an article about this in french](https://zaonirinku.github.io/other/webgpu.html)).
+The most keen-eyed readers will notice that **there was not a lot of commits** on my GitHub account between around the end of the Global Game Jam and the end of May. The reason is simple: working on NutshellEngine became **exhausting**, especially because of a huge mistake I did when starting the project (more on that later). During this period, I started to work on [Team Nutshell's website](https://www.team-nutshell.dev/) (which is where you're probably reading this article). I am no web developer so I just used GitHub Pages and made [a custom CSS](https://github.com/ntsh-oni/GitHubPagesDefaultThemeDark). I also learned about WebGPU and started experimenting with it in C++ (even making a [graphics module for NutshellEngine](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/webgpu-triangle)) and TypeScript (made a [WGSL shader editor](https://www.team-nutshell.dev/shader/editor.html) and a [simple model viewer](https://www.team-nutshell.dev/model/visualizer.html)), did not like it and moved on.
 
 Before that break, I was working on NutshellEngine way too much because I **really liked working on this project** and you can **never get bored from working on a game engine**, as there are so many things to learn and do.
 
