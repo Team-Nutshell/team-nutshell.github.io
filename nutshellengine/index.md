@@ -25,6 +25,7 @@ NutshellEngine features:
 ## [Other applications made with NutshellEngine](other_applications/index.md)
 
 ## Articles
+- [**Vulkan: VkRenderPass VS Dynamic Rendering**](articles/vulkan-renderpass.md)
 - [**NutshellEngine's 1st anniversary!**](articles/1stanniversary.md)
 - [**Mistakes will be made**](articles/mistakes.md)
 - [**Colliders, intersection normal and penetration depth**](articles/colliders.md)
