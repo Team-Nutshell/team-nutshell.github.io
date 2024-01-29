@@ -22,8 +22,6 @@ NutshellEngine features:
 
 ## [Games made with NutshellEngine](games/index.md)
 
-## [Other applications made with NutshellEngine](other_applications/index.md)
-
 ## Articles
 - [**Vulkan: VkRenderPass VS Dynamic Rendering**](articles/vulkan-renderpass.md)
 - [**NutshellEngine's 1st anniversary!**](articles/1stanniversary.md)
