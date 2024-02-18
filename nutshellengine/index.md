@@ -24,6 +24,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**On the importance to make games during the game engine's development**](articles/making-games-during-development.md)
 - [**Vulkan: VkRenderPass VS Dynamic Rendering**](articles/vulkan-renderpass.md)
 - [**NutshellEngine's 1st anniversary!**](articles/1stanniversary.md)
 - [**Mistakes will be made**](articles/mistakes.md)
