@@ -1,6 +1,9 @@
 ![NutshellEngine](assets/images/nutshellengine-logo-full-dark-theme.png)
 
 [**NutshellEngine**](https://github.com/Team-Nutshell) is a modular game engine designed to enable game and engine developers to work together efficiently by providing easy to replace modules implementing the game engine's principal systems such as rendering, physics and audio.
+
+# [Download NutshellEngine on itch.io](https://team-nutshell.itch.io/nutshellengine)
+
 - [**NutshellEngine**](https://github.com/Team-Nutshell/NutshellEngine): Core of NutshellEngine, manages the modules and various systems.
 - [**Application**](https://github.com/Team-Nutshell/NutshellEngine-Application): Base of NutshellEngine's applications.
 - [**Editor**](https://github.com/Team-Nutshell/NutshellEngine-Editor): NutshellEngine's editor.
@@ -25,6 +28,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**NutshellEngine's 1st release!**](articles/1strelease.md)
 - [**Developing NutshellEngine's first editor**](articles/first-editor.md)
 - [**On the importance to make games during the game engine's development**](articles/making-games-during-development.md)
 - [**Vulkan: VkRenderPass VS Dynamic Rendering**](articles/vulkan-renderpass.md)
