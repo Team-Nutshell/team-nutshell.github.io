@@ -28,6 +28,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**NutshellEngine's 2nd anniversary!**](articles/2ndanniversary.md)
 - [**NutshellEngine's 1st release!**](articles/1strelease.md)
 - [**Developing NutshellEngine's first editor**](articles/first-editor.md)
 - [**On the importance to make games during the game engine's development**](articles/making-games-during-development.md)
