@@ -28,6 +28,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**GPU-driven Particle Rendering**](articles/particle-rendering.md)
 - [**NutshellEngine's 2nd anniversary!**](articles/2ndanniversary.md)
 - [**NutshellEngine's 1st release!**](articles/1strelease.md)
 - [**Developing NutshellEngine's first editor**](articles/first-editor.md)
