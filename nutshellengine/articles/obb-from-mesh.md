@@ -167,10 +167,10 @@ The center of the sphere can be calculated using the mean of the positions, same
 The radius of the sphere can be calculated by taking the distance to the furthest point from the sphere's center:
 
 ```cpp
-for (const nml::vec3& position : uniquePositions) {
-	const nml::vec3 positionMinusCenter = position - means;
+for (const vec3& position : uniquePositions) {
+	const vec3 positionMinusCenter = position - means;
 
-	const float positionMinusCenterSquaredLength = nml::dot(positionMinusCenter, positionMinusCenter);
+	const float positionMinusCenterSquaredLength = dot(positionMinusCenter, positionMinusCenter);
 	if (positionMinusCenterSquaredLength > sphere.radius) {
 		sphere.radius = positionMinusCenterSquaredLength;
 	}
@@ -202,17 +202,17 @@ After calculating the eigenvectors and eigenvalues, and sorting them, the eigenv
 
 ```cpp
 float segmentLengthMax = 0.0f;
-for (const nml::vec3& position : uniquePositions) {
-	const nml::vec3 positionMinusCenter = position - means;
+for (const vec3& position : uniquePositions) {
+	const vec3 positionMinusCenter = position - means;
 
 	// Calculate the length of the base-tip segment
-	const float segmentLength = std::abs(nml::dot(eigen[0].second, positionMinusCenter));
+	const float segmentLength = std::abs(dot(eigen[0].second, positionMinusCenter));
 	if (segmentLength > segmentLengthMax) {
 		segmentLengthMax = segmentLength;
 	}
 
 	// Calculate the radius
-	const float radius = std::abs(nml::dot(eigen[1].second, positionMinusCenter));
+	const float radius = std::abs(dot(eigen[1].second, positionMinusCenter));
 	if (radius > capsule.radius) {
 		capsule.radius = radius;
 	}
