@@ -28,6 +28,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**Calculating an OBB from a Mesh**](articles/obb-from-mesh.md)
 - [**GPU-driven Particle Rendering**](articles/particle-rendering.md)
 - [**NutshellEngine's 2nd anniversary!**](articles/2ndanniversary.md)
 - [**NutshellEngine's 1st release!**](articles/1strelease.md)
