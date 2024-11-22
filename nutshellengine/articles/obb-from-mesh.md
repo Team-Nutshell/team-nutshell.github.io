@@ -7,9 +7,9 @@ This is the OBB structure I will use in this article:
 
 ```cpp
 struct OBB {
-    Math::vec3 center; // Center of the OBB
-    Math::vec3 halfExtent; // Half of the size for each axis
-    Math::vec3 rotation; // Rotation in Euler angles for each axis
+    vec3 center; // Center of the OBB
+    vec3 halfExtent; // Half of the size for each axis
+    vec3 rotation; // Rotation in Euler angles for each axis
 };
 ```
 
@@ -155,7 +155,7 @@ Spheres and capsules are two widely used types of colliders, and they can be cal
 ### Sphere from a Mesh
 ```cpp
 struct Sphere {
-    Math::vec3 center; // Center of the sphere
+    vec3 center; // Center of the sphere
     float radius; // Radius of the sphere
 };
 ```
@@ -188,8 +188,8 @@ For speed purposes, only the squared radius is stored and compared, the actual r
 ### Capsule from a Mesh
 ```cpp
 struct Capsule {
-    Math::vec3 base; // Base of the capsule
-    Math::vec3 tip; // Tip of the capsule
+    vec3 base; // Base of the capsule
+    vec3 tip; // Tip of the capsule
     float radius; // Radius of the capsule
 };
 ```
