@@ -291,7 +291,7 @@ For the next frame, the *read buffer* becames the *write buffer* and the *write 
 
 On this frame, we have **99720 particles**, in a 3D world, with the camera and transparency.
 
-The **compute shader takes 0.05ms** and the **draw takes 0.17ms**.
+The **compute shader takes 0.05ms** and the **draw takes 0.17ms** on an NVIDIA RTX 4070 GPU.
 
 Here is a video with 3 different examples of particle emitters:
 
