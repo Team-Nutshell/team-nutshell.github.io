@@ -306,6 +306,8 @@ We sample the right texture, using the ``nonuniformEXT`` qualifier around the in
 
 The multiplication with the particle's colors is not mandatory, but it **allows you to use level of gray textures and color them using this color attribute**.
 
+![Particles close](particle-rendering-2/particles-close.png)
+
 ## Results
 ![Particles](particle-rendering-2/particles.png)
 
