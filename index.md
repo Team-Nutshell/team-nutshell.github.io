@@ -1,4 +1,4 @@
-![Team Nutshell](assets/images/team-nutshell-logo-full-dark-theme.png)
+![Team Nutshell](assets/images/team_nutshell_logo.png)
 
 # [NutshellEngine](nutshellengine/index.md)
 [**NutshellEngine**](https://github.com/Team-Nutshell) is a modular game engine.
