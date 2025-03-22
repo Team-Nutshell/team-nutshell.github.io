@@ -36,7 +36,29 @@ auto uniquePositionsCmp = [](const vec3& a, const vec3& b) {
 
 std::set<vec3, decltype(uniquePositionsCmp)> uniquePositions(uniquePositionsCmp);
 
+vec3 positionMin = vec3(std::numeric_limits<float>::max());
+vec3 positionMax = vec3(std::numeric_limits<float>::lowest());
+
 for (size_t j = 0; j < mesh.vertices.size(); j++) {
+	if (mesh.vertices[j].position.x < positionMin.x) {
+		positionMin.x = mesh.vertices[j].position.x;
+	}
+	if (mesh.vertices[j].position.x > positionMax.x) {
+		positionMax.x = mesh.vertices[j].position.x;
+	}
+	if (mesh.vertices[j].position.y < positionMin.y) {
+		positionMin.y = mesh.vertices[j].position.y;
+	}
+	if (mesh.vertices[j].position.y > positionMax.y) {
+		positionMax.y = mesh.vertices[j].position.y;
+	}
+	if (mesh.vertices[j].position.z < positionMin.z) {
+		positionMin.z = mesh.vertices[j].position.z;
+	}
+	if (mesh.vertices[j].position.z > positionMax.z) {
+		positionMax.z = mesh.vertices[j].position.z;
+	}
+
 	uniquePositions.insert(mesh.vertices[j].position);
 }
 ```
@@ -44,14 +66,12 @@ for (size_t j = 0; j < mesh.vertices.size(); j++) {
 I use a lexicographical comparison on the string representation of the position of the vertices to insert them into a set, but you can use whatever method you want, as long as you don't have duplicate positions into the set.
 
 ### Finding the center
-The center of our ABB is the mean of the position on each axis.
+The center of our OBB is the mean of the mesh's AABB.
 
 ```cpp
-float size = static_cast<float>(uniquePositions.size());
+nml::vec3 center = (positionMin + positionMax) / 2.0f;
 
-const vec3 means = std::reduce(uniquePositions.begin(), uniquePositions.end(), vec3(0.0f, 0.0f, 0.0f), [](vec3 acc, const vec3& val) { return acc + val; }) / size;
-
-obb.center = means; // OBB center is the mean of the mesh's vertices positions
+obb.center = center; // OBB center is the mean of the mesh's AABB
 ```
 
 ### Constructing the covariance matrix
@@ -60,6 +80,10 @@ We can now construct the [**covariance matrix**](https://en.wikipedia.org/wiki/C
 The covariance matrix is a square matrix that represents the multi-dimensional covariance of a set. One of the interesting properties we are going to use is that **covariance matrices are symmetric** (because Cov(x, y) == Cov(y, x)), so only half of the matrix (+ the diagonal) are interesting for us.
 
 ```cpp
+float size = static_cast<float>(uniquePositions.size());
+
+const vec3 means = std::reduce(uniquePositions.begin(), uniquePositions.end(), vec3(0.0f, 0.0f, 0.0f), [](vec3 acc, const vec3& val) { return acc + val; }) / size;
+
 mat3 covarianceMatrix; // Using a full mat3 is not actually needed as the covariance matrix is symmetric
 for (const vec3& position : uniquePositions) {
 	covarianceMatrix.x.x += (position.x - means.x) * (position.x - means.x); // Variance of x
@@ -104,7 +128,7 @@ We can then **project each vertex along each eigenvector** to find the furthest 
 
 ```cpp
 for (const vec3& position : uniquePositions) {
-	const vec3 positionMinusCenter = position - means;
+	const vec3 positionMinusCenter = position - center;
 
 	const float extentX = std::abs(dot(eigen[0].second, positionMinusCenter));
 	if (extentX > obb.halfExtent.x) {
@@ -162,13 +186,13 @@ struct Sphere {
 
 ![Sphere](obb-from-mesh/collider_sphere.png)
 
-The center of the sphere can be calculated using the mean of the positions, same as the OBB.
+The center of the sphere can be calculated using the mean of the mesh's AABB, same as the OBB.
 
 The radius of the sphere can be calculated by taking the distance to the furthest point from the sphere's center:
 
 ```cpp
 for (const vec3& position : uniquePositions) {
-	const vec3 positionMinusCenter = position - means;
+	const vec3 positionMinusCenter = position - center;
 
 	const float positionMinusCenterSquaredLength = dot(positionMinusCenter, positionMinusCenter);
 	if (positionMinusCenterSquaredLength > sphere.radius) {
@@ -203,7 +227,7 @@ After calculating the eigenvectors and eigenvalues, and sorting them, the eigenv
 ```cpp
 float segmentLengthMax = 0.0f;
 for (const vec3& position : uniquePositions) {
-	const vec3 positionMinusCenter = position - means;
+	const vec3 positionMinusCenter = position - center;
 
 	// Calculate the length of the base-tip segment
 	const float segmentLength = std::abs(dot(eigen[0].second, positionMinusCenter));
@@ -218,8 +242,8 @@ for (const vec3& position : uniquePositions) {
 	}
 }
 
-capsule.base = means - (eigen[0].second * (segmentLengthMax - capsule.radius));
-capsule.tip = means + (eigen[0].second * (segmentLengthMax - capsule.radius));
+capsule.base = center - (eigen[0].second * (segmentLengthMax - capsule.radius));
+capsule.tip = center + (eigen[0].second * (segmentLengthMax - capsule.radius));
 ```
 
 ![Capsule](obb-from-mesh/capsule.png)
