@@ -115,13 +115,8 @@ The eigenvectors must be **normalized**.
 ### Calculating the half-extent and rotation
 Now that we have our eigenvectors and eigenvalues, we can finish calculating our OBB.
 
-We start by sorting our eigenvectors according to their corresponding eigenvalues, as a greater eigenvalue indicate a more important eigenvector.
-
 ```cpp
 std::array<std::pair<float, vec3>, 3> eigen = covarianceMatrix.eigen();
-std::sort(eigen.begin(), eigen.end(), [](const std::pair<float, vec3>& a, const std::pair<float, vec3>& b) {
-	return a.first > b.first;
-	});
 ```
 
 We can then **project each vertex along each eigenvector** to find the furthest point, giving use the half-extent for each axis.
