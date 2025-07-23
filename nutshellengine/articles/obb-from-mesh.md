@@ -220,25 +220,30 @@ Capsules use the same method as the OBB, with Principal Component Analysis.
 After calculating the eigenvectors and eigenvalues, and sorting them, the eigenvector with the biggest eigenvalue is the axis where the base and tip will be, while the eigenvector with the second biggest eigenvalue will be used to calculate the capsule's radius.
 
 ```cpp
+std::array<std::pair<float, vec3>, 3> eigenSorted = eigen;
+std::sort(eigenSorted.begin(), eigenSorted.end(), [](const std::pair<float, vec3>& a, const std::pair<float, vec3>& b) {
+	return a.first > b.first;
+	});
+
 float segmentLengthMax = 0.0f;
 for (const vec3& position : uniquePositions) {
 	const vec3 positionMinusCenter = position - center;
 
 	// Calculate the length of the base-tip segment
-	const float segmentLength = std::abs(dot(eigen[0].second, positionMinusCenter));
+	const float segmentLength = std::abs(dot(eigenSorted[0].second, positionMinusCenter));
 	if (segmentLength > segmentLengthMax) {
 		segmentLengthMax = segmentLength;
 	}
 
 	// Calculate the radius
-	const float radius = std::abs(dot(eigen[1].second, positionMinusCenter));
+	const float radius = std::abs(dot(eigenSorted[1].second, positionMinusCenter));
 	if (radius > capsule.radius) {
 		capsule.radius = radius;
 	}
 }
 
-capsule.base = center - (eigen[0].second * (segmentLengthMax - capsule.radius));
-capsule.tip = center + (eigen[0].second * (segmentLengthMax - capsule.radius));
+capsule.base = center - (eigenSorted[0].second * (segmentLengthMax - capsule.radius));
+capsule.tip = center + (eigenSorted[0].second * (segmentLengthMax - capsule.radius));
 ```
 
 ![Capsule](obb-from-mesh/capsule.png)
