@@ -44,3 +44,10 @@
 | ------------- | ------------- |
 | [**default**](https://github.com/Team-Nutshell/NutshellEngine-AssetLoaderModule) | Empty module. |
 | [**multi**](https://github.com/Team-Nutshell/NutshellEngine-AssetLoaderModule/tree/module/multi) | Load multiple types of files. |
+
+## Platform Modules
+
+| Name | Description |
+| ------------- | ------------- |
+| [**default**](https://github.com/Team-Nutshell/NutshellEngine-PlatformModule) | Empty module. |
+| [**steam**](https://github.com/Team-Nutshell/NutshellEngine-PlatformModule/tree/module/steam) | Interface with Steam. |
