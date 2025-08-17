@@ -14,7 +14,7 @@ The first objective is then to take our list of points we finished with in the l
 ### Point to Quad
 In the end of the first article, I talked about **either using a compute shader or a geometry shader** but **we are going to do something completely different**. A compute shader would require a few more buffers to store the triangles and geometry shaders are less and less supported so this solution would not be possible on all devices.
 
-So what is the trick then? User *sfaer* on the Vulkan Discord pointed me a pretty nice solution using **Instancing**.
+So what is the trick then? User *sfaer* on the Vulkan Discord pointed me to a pretty nice solution using **Instancing**.
 
 What if, instead of rendering *nbParticles* vertices, we **draw 4 vertices**, *nbParticles* **times**? We would then only need to position our 4 vertices in the vertex shader, while also giving them texture coordinates and we're done!
 
