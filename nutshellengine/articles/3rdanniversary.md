@@ -3,7 +3,7 @@
 Today is NutshellEngine's 3rd anniversary!
 
 ## What happened this year
-This year, NutshellEngine got [https://team-nutshell.itch.io/nutshellengine/devlog](**17 releases**) (0.1.1 - 0.2.0).
+This year, NutshellEngine got [**17 releases**](https://team-nutshell.itch.io/nutshellengine/devlog) (0.1.1 - 0.2.0).
 
 A lot of things were added and changed, here is a small sample:
 - **UI/UX editor improvements**: With the goal to make the engine more and more accessible, the editor needs a lot of work. It's now possible to duplicate and rename entities and assets easily and quickly, guizmos can keep the same size independently of the distance to the camera if the option is selected, etc.
