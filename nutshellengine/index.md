@@ -28,6 +28,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**NutshellEngine's 3rd anniversary!**](articles/3rdanniversary.md)
 - [**Developing a game for Steam while developing a game engine, and vice-versa**](articles/steam-game.md)
 - [**Starting game engine development**](articles/starting.md)
 - [**GPU-driven Particle Rendering - Part 2**](articles/particle-rendering-2.md)
