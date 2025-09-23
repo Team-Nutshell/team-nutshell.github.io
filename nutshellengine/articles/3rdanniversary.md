@@ -65,9 +65,9 @@ But also...
 
 The **first NutshellEngine game to come to Steam**!
 
-It's made by me and it's called **B-Line**. It's a walking simulator where you have to explore different environments that you access via the **B-Line subway** to find out how to escape the station.
+It's made by me and it's called **B-Line**. It's a **knowledge-based walking simulator** where you have to explore different environments that you access via the **B-Line subway** to find out how to escape the station.
 
-It's releasing **October 3rd 2025** and I'm really happy with the result.
+It's releasing **October 3rd 2025**, has **both a Windows and a Linux build**, with the *Steam Deck* as a first-class platform, and I'm really happy with the result.
 
 <iframe src="https://store.steampowered.com/widget/3939010/" frameborder="0" width="646" height="190"></iframe>
 
