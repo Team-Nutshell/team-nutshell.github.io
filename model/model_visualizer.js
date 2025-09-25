@@ -1042,7 +1042,7 @@ class Renderer {
             this.device = yield this.adapter.requestDevice({
                 label: "Device",
                 requiredLimits: {
-                    "maxBufferSize": 2147483648
+                    "maxBufferSize": navigator.gpu.maxBufferSize
                 }
             });
             if (!this.device) {
