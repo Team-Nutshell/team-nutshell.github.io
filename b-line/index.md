@@ -16,4 +16,6 @@ The game contains:
 
 <iframe src="https://store.steampowered.com/widget/3939010/" frameborder="0" width="646" height="190"></iframe>
 
-Available on Windows and Linux, optimized for **Steam Deck**.
+Available on **Windows** and **Linux**, optimized for **Steam Deck**.
+
+Made with [**NutshellEngine**](../nutshellengine/index.md).
