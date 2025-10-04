@@ -10,7 +10,7 @@ Take the **B-Line subway** and **freely explore multiple worlds** with **differ
 
 The game contains:
 
-- A playtime of **around two hours**.
+- A playtime of **around 3 hours**.
 - **Achievements** (on Steam), which may hide some surprises...
 - Can be played with **a mouse and keyboard**, or with **a controller**.
 
