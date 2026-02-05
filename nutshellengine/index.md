@@ -48,4 +48,4 @@ NutshellEngine features:
 ## Screenshots
 <a href="assets/images/pathtracing.png"><img src="assets/images/pathtracing.png" width=440px style="float:left;"></a><a href="assets/images/tgntw.png"><img src="assets/images/tgntw.png" width=440px style="float:left;"></a><br />
 <a href="assets/images/raymarching.png"><img src="assets/images/raymarching.png" width=440px style="float:left;"></a><a href="assets/images/basicrendering.png"><img src="assets/images/basicrendering.png" width=440px style="float:left;"></a>
-<a href="assets/images/editor.png"><img src="assets/images/editor.png" width=440px style="float:left;"></a>
+<a href="assets/images/editor.png"><img src="assets/images/editor.png" width=440px style="float:left;"></a> <a href="assets/images/b-line.png"><img src="assets/images/b-line.png" width=440px style="float:left;"></a>
