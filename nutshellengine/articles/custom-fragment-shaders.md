@@ -229,7 +229,7 @@ You also have to take **shadowmapping** in count, and create pipelines for shado
 ![Sponza cellshading](custom-fragment-shaders/sponza-cellshading.png)
 *Sponza but the banners and curtains have a custom cell-shading fragment shader*
 
-The ``NtshEngn_time`` gives the time since the application launched in seconds and allows to do some animation in shaders.
+``NtshEngn_time`` gives the time since the application launched in seconds and allows to do some animation in shaders.
 
 ![Emerald](custom-fragment-shaders/emerald.gif)
 ![Pulsing Star](custom-fragment-shaders/pulsing_star.gif)
@@ -238,7 +238,7 @@ The ``NtshEngn_time`` gives the time since the application launched in seconds a
 
 ## Future improvements
 This system still has room for improvements:
-- **Adding more ``NtshEngn_`` variables**, notably, a way to access shadow maps (maybe an entire function to sample shadow maps correctly),
+- **Adding more ``NtshEngn_`` variables**, notably, a way to access shadow maps (maybe an entire function to sample shadow maps correctly), *(edit: shadowmaps are done!)*
 - **Adding the possibility to pass data from scripts**, the custom fragment shaders could have a way to declare custom inputs with identifiers to edit the value through gameplay scripts,
 - **Adding a way to extend the default fragment shader instead of writing a new one entirely**, it would allow to apply changes while staying close to the default shading,
 - **Extend the system for post-process passes**,
