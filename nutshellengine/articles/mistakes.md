@@ -23,3 +23,5 @@ So how did game engines manage this transition? They sometimes didn't and still 
 
 ## Conclusion
 Predicting that mistakes will be made is an important thing when developing a software, especially big ones, as it will allow you to architecture it in a way that will make refactoring easier than if you didn't take it in count. This way of thinking can save you hours of (terribly boring and repeating) work, and sometimes even completely save the development process of your software.
+
+[Back to NutshellEngine index](../index.md)

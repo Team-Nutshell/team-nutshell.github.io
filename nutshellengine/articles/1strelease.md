@@ -46,3 +46,5 @@ This year, I didn't only do what was described in the first anniversary article,
 
 ## Reflecting on the release and what's next
 I don't expect anyone to actually try and use NutshellEngine, but I will work on it as if people actually use it, because I'm using it myself. This means, **bugfixes and improvements** to both the runtime and the editor, **better documentation** with examples and tutorials on how to make a game with NutshellEngine and **actually make more games with NutshellEngine**.
+
+[Back to NutshellEngine index](../index.md)

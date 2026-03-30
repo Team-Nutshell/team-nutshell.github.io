@@ -325,3 +325,5 @@ With these algorithms, an integrator and a collision reponse system, you can now
 - <sup>2</sup>[**Collision Detection - Newcastle University**](https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/physicstutorials/4collisiondetection/Physics%20-%20Collision%20Detection.pdf)
 - <sup>3</sup>[**Capsule Collision Detection - Wicked Engine**](https://wickedengine.net/2020/04/26/capsule-collision-detection/)
 - <sup>4</sup>[**Platform game collision detection (Answer to a forum post) - oliii**](https://www.gamedev.net/forums/topic/567310-platform-game-collision-detection/4629276/)
+
+[Back to NutshellEngine index](../index.md)

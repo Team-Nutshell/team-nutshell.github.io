@@ -29,3 +29,5 @@ Between the first release and now, **2 months passed**, so a few things happened
 A short article, as said earlier, most of what happened between the first anniversary and the first release is on the [**1st release devblog**](1strelease.md).
 
 Releases and patch notes are available on [itch.io](https://team-nutshell.itch.io/nutshellengine).
+
+[Back to NutshellEngine index](../index.md)

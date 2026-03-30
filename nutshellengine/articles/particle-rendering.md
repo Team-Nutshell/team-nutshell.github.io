@@ -302,3 +302,5 @@ This article presents a simple GPU-driven particle rendering method, but it can 
 - **Adding textures to particles to give them different shapes**: To add textures, **the particles must be quads** (so two triangles) and not points anymore. You can either **do this in the compute shader** or **use a geometry shader to generate the quads for each vertex**. With the latter, **be aware that geometry shaders are less and less supported and don't even exist in some graphics APIs like Metal and WebGPU**. The texture can be passed as an index as a vertex attribute to use it in an array of images.
 - **Culling**: You can perform culling technics, like **frustum culling**, in the compute shader, on particles to render less of them, these particles must be **marked as culled and not destroyed** as they still need to be updated and will be re-rendered when visible on screen.
 - **Particles change over time**: By passing more parameters to the compute shader, you can do a linear interpolation between, for example, a starting and an ending size, to make the particles change over time.
+
+[Back to NutshellEngine index](../index.md)

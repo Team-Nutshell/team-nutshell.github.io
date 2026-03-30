@@ -252,3 +252,5 @@ capsule.tip = center + (eigenSorted[0].second * (segmentLengthMax - capsule.radi
 
 ## Full implementation
 The full implementation can be found on the [NutshellEngine-Editor's repository](https://github.com/Team-Nutshell/NutshellEngine-Editor/blob/main/src/renderer/renderer_resource_manager.cpp), where all 3 types are calculated at the same time in the ``loadMeshColliders`` function.
+
+[Back to NutshellEngine index](../index.md)

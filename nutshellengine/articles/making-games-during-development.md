@@ -26,3 +26,5 @@ Obviously, **the goal is not to start with a AAA open-world game**, a **small ga
 If you have friends that are willing to use your game engine (lucky you!), you can also organize a game jam where everyone will work on their own game, on your game engine. **Ask them to note every issue they encounter** and you will probably get a lot of very useful feedback from people that aren't as familiar with your game engine as you.
 
 To conclude, making games while making a game engine is important, don't wait for it to be completely ready before starting. If you don't, you may realize your game engine cannot actually make games, and it may be too late to fix it easily.
+
+[Back to NutshellEngine index](../index.md)

@@ -77,3 +77,5 @@ It's releasing **October 3rd 2025**, has **both a Windows and a Linux build**, w
 ## Conclusion
 
 I would say that this year has been as productive as the two previous ones so I'm happy with how the engine is going. I still have no idea when the "1.0" update will release, getting to this specific state is a pretty long process, even if it doesn't really mean anything.
+
+[Back to NutshellEngine index](../index.md)

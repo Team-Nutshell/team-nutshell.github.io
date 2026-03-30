@@ -141,3 +141,5 @@ In general, I still got some features to implement to consider the engine in its
 It's not 100% sure that all these features will make it to 1.0 but many more not written there will be added too.
 
 To conclude this article, I am really happy with how the engine is progressing after a year and I am finally going to start re-doing games with it.
+
+[Back to NutshellEngine index](../index.md)

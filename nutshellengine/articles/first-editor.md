@@ -78,3 +78,5 @@ After that, I improved it some more, adding basic lighting to the renderer and g
 
 ## Conclusion
 Even if it's far from perfect, I am really happy with how this first editor turned out, and **I think that the C++/Qt/OpenGL combo is a really efficient one to make an editor quickly**. I use it everytime I want to do something with my engine, which is a good sign. I will continue to work on it and improve it, until NutshellEngine is ready to have its editor made with it.
+
+[Back to NutshellEngine index](../index.md)
