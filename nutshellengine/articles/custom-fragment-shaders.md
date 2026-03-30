@@ -131,6 +131,16 @@ layout(binding = 1) restrict readonly buffer ShadowMapBuffer {
 out vec4 outColor;
 ```
 
+For comparison, here is how textures are accessed in the [Sirius](https://github.com/Team-Nutshell/NutshellEngine-GraphicsModule/tree/module/sirius) renderer, which uses a bindless design:
+```glsl
+#define NtshEngn_diffuseTexture textures[nonuniformEXT(materials.info[materialID].diffuseTextureIndex)]
+#define NtshEngn_normalTexture textures[nonuniformEXT(materials.info[materialID].normalTextureIndex)]
+#define NtshEngn_metalnessTexture textures[nonuniformEXT(materials.info[materialID].metalnessTextureIndex)]
+#define NtshEngn_roughnessTexture textures[nonuniformEXT(materials.info[materialID].roughnessTextureIndex)]
+#define NtshEngn_occlusionTexture textures[nonuniformEXT(materials.info[materialID].occlusionTextureIndex)]
+#define NtshEngn_emissiveTexture textures[nonuniformEXT(materials.info[materialID].emissiveTextureIndex)]
+```
+
 When it's time to compile the user-written fragment shader, the prefix is added to the code written by the user, and is then compiled.
 
 A fragment shader that shades an object with the scene's lights while using the diffuse texture included in the object's material would be written this way:
