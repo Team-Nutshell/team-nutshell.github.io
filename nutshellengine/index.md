@@ -15,12 +15,10 @@
 - [**Platform Module**](https://github.com/Team-Nutshell/NutshellEngine-PlatformModule): Module linking NutshellEngine to distribution platforms.
 
 NutshellEngine features:
-- Swappable modules without recompiling the application;
+- Editor to create games;
 - C++ entity scripting (with a [ScriptingAPI](../nutshellengine-docs/scripting/api/index.html) documentation);
-- Job system for multithreading;
-- Networking abstraction;
+- Swappable modules without recompiling the application;
 - Assets (images, models, sounds, scenes, ...) management system;
-- User Interface API.
 
 ## [Documentation](../nutshellengine-docs)
 
