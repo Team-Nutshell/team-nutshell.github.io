@@ -27,6 +27,7 @@ NutshellEngine features:
 ## [Games made with NutshellEngine](games/index.md)
 
 ## Articles
+- [**Making your game engine production-ready**](articles/production-ready-engine.md)
 - [**NutshellEngine's 4th anniversary!**](articles/4thanniversary.md)
 - [**Custom Fragment Shaders in NutshellEngine**](articles/custom-fragment-shaders.md)
 - [**NutshellEngine's 3rd anniversary!**](articles/3rdanniversary.md)
