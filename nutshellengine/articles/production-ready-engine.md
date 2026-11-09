@@ -2,7 +2,7 @@
 
 After publishing 2 games on Steam using my own game engine, I thought it would be useful to write what I consider to be useful tips to have a production-ready game engine and start releasing commercial games where you can be proud of the work you accomplished.
 
-A "production-ready" game engine **doesn't need** to be able to make huge games, especially if you are a solo-developer working on small*ish* games. It just needs to be able to make games, and make them run well on many computers and configurations.
+A "production-ready" game engine **doesn't need** to be able to make huge games, it's especially unnecessary if you are a solo-developer working on small*ish* games. It just needs to be able to make games, and make them run well on many computers and configurations.
 
 Some of these tips are general, some are really specific.
 
@@ -14,7 +14,7 @@ Some of these tips are general, some are really specific.
 ```cpp
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 ```
-- **Add support for the distribution platform**. If you plan to publish your game on Steam, players will appreciate that your game contains achievements, and it's not even hard to add. Get the Steamworks SDK and the [Steamworks documentation](https://partner.steamgames.com/doc/home) and implement the features you need. Remember to isolate it correctly so you can still make builds that do not require Steam. [Here](https://github.com/Team-Nutshell/NutshellEngine-PlatformModule/blob/module/steam/src/ntshengn_platform_module.cpp) is an example on how Steam is implemented in NutshellEngine.
+- **Add support for the distribution platform**. If you plan to publish your game on Steam, players will appreciate that your game contains achievements, and it's not even hard to add. Get the Steamworks SDK and the [Steamworks documentation](https://partner.steamgames.com/doc/home) and implement the features you need. Remember to isolate it correctly so you can still make builds that do not require Steam. [Here](https://github.com/Team-Nutshell/NutshellEngine-PlatformModule/blob/0fc77791c8f07d819e0e6df41564ae71560211eb/src/ntshengn_platform_module.cpp) is an example on how Steam is implemented in NutshellEngine, as you can see, it's not many lines of code, and there are features you probably don't even need there.
 - **Think about localization**. If you can support multiple languages, it's interesting to do it. It includes being able to read text from a file with non-ASCII characters (for example, UTF-8). It may also force you to change how you are loading your fonts and rendering your characters on screen.
 - **It's your engine**. You know its strengths and weaknesses, you know its limits. Make a game you think you will be able to make on your engine and improve it with the features you need to actually make the game.
 
