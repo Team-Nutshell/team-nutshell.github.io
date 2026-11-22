@@ -18,7 +18,7 @@
 [**B-Line**](https://store.steampowered.com/app/3939010/BLine/) is a short knowledge-based walking simulator game. Explore different worlds and discover how to get out of the station.
 
 ## [Manorbound](manorbound/index.md)
-[**Manorbound**](https://store.steampowered.com/app/5175950/Manorbound/) an exploration adventure puzzle game. Explore a manor trapped in a time loop and solve puzzles to uncover the manor's deepest secrets and break the cycle.
+[**Manorbound**](https://store.steampowered.com/app/5175950/Manorbound/) is an exploration adventure puzzle game. Explore a manor trapped in a time loop and solve puzzles to uncover the manor's deepest secrets and break the cycle.
 
 # Contact
 
