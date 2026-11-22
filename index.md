@@ -20,4 +20,8 @@
 ## [Manorbound](manorbound/index.md)
 [**Manorbound**](https://store.steampowered.com/app/5175950/Manorbound/) an exploration adventure puzzle game. Explore a manor trapped in a time loop and solve puzzles to uncover the manor's deepest secrets and break the cycle.
 
-# [Contact](mailto:contact@team-nutshell.dev)
+# Contact
+
+## [Email](mailto:contact@team-nutshell.dev)
+
+## [Bluesky](https://bsky.app/profile/team-nutshell.dev)
